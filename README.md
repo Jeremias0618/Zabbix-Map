@@ -114,29 +114,6 @@ Obtiene todos los eventos de Zabbix en formato JSON.
 }
 ```
 
-## Características Técnicas
-
-### Monitoreo en Tiempo Real
-
-- Actualización automática cada 4 segundos
-- Detección de eventos nuevos con animación
-- Agrupación de eventos simultáneos por colores
-- Limpieza automática de eventos antiguos
-
-### Optimización de Rendimiento
-
-- Cache de sesiones de Zabbix
-- Deduplicación de eventos
-- Compresión gzip habilitada
-- Límites de tiempo de ejecución configurados
-
-### Seguridad
-
-- Tokens de autenticación encriptados
-- Validación de entrada en todos los formularios
-- Headers de seguridad configurados
-- Escape de datos de salida
-
 ## Desarrollo
 
 ### Estructura de Datos
@@ -150,43 +127,5 @@ Los eventos se estructuran con los siguientes campos:
 - `STATUS`: Estado del evento (PROBLEM/RESOLVED)
 - `TIME`: Timestamp del evento
 - `DESCRIPCION`: Descripción detallada
-
-### Personalización
-
-El sistema es altamente personalizable:
-
-- Colores y temas en CSS
-- Filtros adicionales en JavaScript
-- Nuevos tipos de eventos en PHP
-- Integración con mapas externos
-
-## Contribución
-
-1. Fork el proyecto
-2. Crear una rama para tu feature (`git checkout -b feature/AmazingFeature`)
-3. Commit tus cambios (`git commit -m 'Add some AmazingFeature'`)
-4. Push a la rama (`git push origin feature/AmazingFeature`)
-5. Abrir un Pull Request
-
-## Licencia
-
-Este proyecto está bajo la Licencia MIT. Ver el archivo `LICENSE` para más detalles.
-
-## Soporte
-
-Para soporte técnico o preguntas:
-
-- Crear un issue en GitHub
-- Contactar al equipo de desarrollo
-- Revisar la documentación de Zabbix API
-
-## Changelog
-
-### v1.0.0
-- Lanzamiento inicial
-- Integración con Zabbix API
-- Panel de eventos en tiempo real
-- Sistema de filtros avanzados
-- Interfaz responsive
 
 ---

@@ -1,6 +1,6 @@
 <?php
 /**
- * Panel de Configuración - Zabbix Real-Time Map Monitor
+ * Panel de Configuración - Zabbix Map
  * 
  * Permite configurar:
  * - Conexión a Zabbix (IP, Puerto, Token)
@@ -11,30 +11,23 @@
 // Iniciar sesión
 session_start();
 
-// Cargar configuración principal
 $config = require_once 'include/config.php';
 
-// Leer versión del sistema desde archivo VERSION
 $version = trim(file_get_contents('VERSION'));
 
-// Configurar zona horaria
 date_default_timezone_set($config['app']['timezone']);
 
-// Incluir clases necesarias
 require_once(__DIR__ . '/include/ZabbixApi.php');
 use IntelliTrend\Zabbix\ZabbixApi;
 
-// Incluir configuración actual
 $configFile = __DIR__ . '/include/config.php';
 $currentConfig = file_exists($configFile) ? require($configFile) : [];
 
-// Procesar formulario de configuración
 $message = '';
 $messageType = '';
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['save_config'])) {
     try {
-        // Validar datos de entrada
         $zabbixIp = filter_var($_POST['zabbix_ip'] ?? '', FILTER_VALIDATE_IP);
         $zabbixPort = filter_var($_POST['zabbix_port'] ?? '', FILTER_VALIDATE_INT, ['options' => ['min_range' => 1, 'max_range' => 65535]]);
         $zabbixToken = trim($_POST['zabbix_token'] ?? '');
@@ -45,7 +38,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['save_config'])) {
         $dbUser = trim($_POST['db_user'] ?? '');
         $dbPass = $_POST['db_pass'] ?? '';
         
-        // Validaciones
         if (!$zabbixIp) {
             throw new Exception('IP de Zabbix no válida');
         }
@@ -68,11 +60,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['save_config'])) {
             throw new Exception('Usuario de base de datos es requerido');
         }
         
-        // Construir URL de Zabbix
         $protocol = ($zabbixPort == 443) ? 'https' : 'http';
         $zabbixUrl = $protocol . '://' . $zabbixIp . ':' . $zabbixPort . '/zabbix';
         
-        // Crear nueva configuración
         $newConfig = [
             'zabbix' => [
                 'ip' => $zabbixIp,
@@ -100,7 +90,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['save_config'])) {
                 ]
             ],
             'app' => [
-                'name' => 'Zabbix Real-Time Map Monitor',
+                'name' => 'Zabbix Map',
                 'version' => '1.0.0',
                 'timezone' => 'America/Lima',
                 'debug' => false,
@@ -149,20 +139,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['save_config'])) {
             ]
         ];
         
-        // Generar contenido del archivo de configuración
         $configContent = "<?php\n";
         $configContent .= "/**\n";
-        $configContent .= " * Configuración de la aplicación Zabbix Real-Time Map Monitor\n";
+        $configContent .= " * Configuración de la aplicación Zabbix Map\n";
         $configContent .= " * Generado automáticamente el " . date('Y-m-d H:i:s') . "\n";
         $configContent .= " */\n\n";
         $configContent .= "return " . var_export($newConfig, true) . ";\n";
         
-        // Escribir archivo de configuración
         if (file_put_contents($configFile, $configContent) === false) {
             throw new Exception('No se pudo escribir el archivo de configuración. Verifique permisos.');
         }
         
-        // Probar conexión a Zabbix
         try {
             $zbx = new ZabbixApi();
             $zbx->loginToken($zabbixUrl, $zabbixToken);
@@ -175,7 +162,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['save_config'])) {
             $messageType = 'warning';
         }
         
-        // Probar conexión a PostgreSQL
         try {
             $dsn = "pgsql:host={$dbIp};port={$dbPort};dbname={$dbName};charset=utf8";
             $pdo = new PDO($dsn, $dbUser, $dbPass, [
@@ -190,7 +176,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['save_config'])) {
             $messageType = 'warning';
         }
         
-        // Recargar configuración actual
         $currentConfig = $newConfig;
         
     } catch (Exception $e) {
@@ -199,7 +184,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['save_config'])) {
     }
 }
 
-// Obtener valores actuales para el formulario
 $zabbixIp = $currentConfig['zabbix']['ip'] ?? '';
 $zabbixPort = $currentConfig['zabbix']['port'] ?? '80';
 $zabbixToken = $currentConfig['zabbix']['token'] ?? '';
@@ -217,13 +201,8 @@ $dbPass = $currentConfig['database']['pass'] ?? '';
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Configuración - <?= htmlspecialchars($config['app']['name']) ?></title>
     <link rel="icon" type="image/x-icon" href="include/ico/bms.ico">
-    
-    <!-- TailwindCSS -->
     <script src="https://cdn.tailwindcss.com"></script>
-    
-    <!-- Material Design Icons -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@mdi/font@7.4.47/css/materialdesignicons.min.css">
-    
     <style>
         body {
             background: linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #334155 100%);

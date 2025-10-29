@@ -10,7 +10,7 @@ logs/
 *.tmp
 *.temp
 
-# Archivos de estadísticas
+# Archivos de estadísticas (deshabilitado)
 api/statistics/
 
 # Archivos de sesión

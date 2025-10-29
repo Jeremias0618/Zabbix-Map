@@ -17,7 +17,7 @@ $rol_actual = 'Supervisor';
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Eventos Zabbix | <?= htmlspecialchars($config['app']['name']) ?></title>
+  <title>Datos Básicos Zabbix | <?= htmlspecialchars($config['app']['name']) ?></title>
   <link rel="icon" type="image/x-icon" href="include/ico/bms.ico">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@mdi/font@7.4.47/css/materialdesignicons.min.css" />
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Outfit:wght@400;500;600;700&display=swap">
@@ -909,9 +909,9 @@ $rol_actual = 'Supervisor';
                     <div class="flex items-center gap-4">
                         <div>
                             <h1 class="text-2xl md:text-3xl font-bold font-display mb-1 text-transparent bg-clip-text bg-gradient-to-r from-orange-300 to-amber-300">
-                                Eventos Zabbix
+                                Datos Básicos Zabbix
                             </h1>
-                            <p class="text-gray-400 text-sm">Monitoreo y gestión de eventos de infraestructura en tiempo real</p>
+                            <p class="text-gray-400 text-sm">Visualización de eventos con información detallada del cliente</p>
                         </div>
                     </div>
                     <div class="flex items-center gap-3">
@@ -925,199 +925,16 @@ $rol_actual = 'Supervisor';
                 </div>
             </div>
 
-            <!-- Filtros -->
-            <div class="glass-card p-8 mb-8" data-aos="fade-up" data-aos-delay="200">
-                <div class="flex items-center justify-between mb-6">
-                    <div class="flex items-center gap-3">
-                        <div class="bg-gradient-to-br from-cyber-blue to-blue-600 rounded-xl p-2.5 shadow-lg">
-                            <span class="mdi mdi-filter-variant text-xl text-white"></span>
-                        </div>
-                        <div>
-                            <h3 class="text-xl font-bold text-white">Filtros Avanzados</h3>
-                            <p class="text-sm text-gray-400">Personaliza la búsqueda de eventos</p>
-                        </div>
-                    </div>
-                    <button id="clear-filters-btn" class="filter-clear-btn group">
-                        <span class="mdi mdi-broom text-lg group-hover:animate-bounce"></span>
-                        <span>Limpiar Todo</span>
-                    </button>
-                </div>
-                
-                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-                    <!-- Filtro OLT -->
-                    <div class="filter-group">
-                        <label class="filter-label">
-                            <span class="mdi mdi-server text-cyber-blue mr-2"></span>
-                            OLT
-                        </label>
-                        <div class="filter-select-wrapper">
-                            <select id="filter-host" class="filter-select">
-                                <option value="">Todas las OLT</option>
-                            </select>
-                            <span class="filter-select-arrow mdi mdi-chevron-down"></span>
-                        </div>
-                    </div>
-                    
-                    <!-- Filtro PON/LOG -->
-                    <div class="filter-group">
-                        <label class="filter-label">
-                            <span class="mdi mdi-lan text-orange-400 mr-2"></span>
-                            PON/LOG
-                        </label>
-                        <div class="filter-input-wrapper">
-                            <span class="filter-input-icon mdi mdi-ethernet"></span>
-                            <input type="text" id="filter-pon" placeholder="Ej: 4/0/35" class="filter-input">
-                        </div>
-                    </div>
-                    
-                    <!-- Filtro DNI -->
-                    <div class="filter-group">
-                        <label class="filter-label">
-                            <span class="mdi mdi-card-account-details-outline text-green-400 mr-2"></span>
-                            DNI
-                        </label>
-                        <div class="filter-input-wrapper">
-                            <span class="filter-input-icon mdi mdi-account"></span>
-                            <input type="text" id="filter-dni" placeholder="Filtrar por DNI..." class="filter-input">
-                        </div>
-                    </div>
-                    
-                    <!-- Filtro ODF -->
-                    <div class="filter-group">
-                        <label class="filter-label">
-                            <span class="mdi mdi-cable-data text-blue-400 mr-2"></span>
-                            ODF
-                        </label>
-                        <div class="filter-input-wrapper">
-                            <span class="filter-input-icon mdi mdi-router-network"></span>
-                            <input type="text" id="filter-odf" placeholder="Ej: 3, 15..." class="filter-input">
-                        </div>
-                    </div>
-                    
-                    <!-- Filtro HILO -->
-                    <div class="filter-group">
-                        <label class="filter-label">
-                            <span class="mdi mdi-cable-data text-yellow-400 mr-2"></span>
-                            HILO
-                        </label>
-                        <div class="filter-input-wrapper">
-                            <span class="filter-input-icon mdi mdi-cable-data"></span>
-                            <input type="text" id="filter-hilo" placeholder="Ej: 24, 78..." class="filter-input">
-                        </div>
-                    </div>
-                    
-                    <!-- Filtro Tipo -->
-                    <div class="filter-group">
-                        <label class="filter-label">
-                            <span class="mdi mdi-tag text-purple-400 mr-2"></span>
-                            Tipo
-                        </label>
-                        <div class="filter-select-wrapper">
-                            <select id="filter-tipo" class="filter-select">
-                                <option value="">Todos los tipos</option>
-                                <option value="EQUIPO ALARMADO">🚨 Equipo Alarmado</option>
-                                <option value="PROBLEMAS DE POTENCIA">⚡ Problemas de Potencia</option>
-                                <option value="CAIDA DE HILO">🔌 Caída de Hilo</option>
-                                <option value="OTRO">📋 Otro</option>
-                            </select>
-                            <span class="filter-select-arrow mdi mdi-chevron-down"></span>
-                        </div>
-                    </div>
-                    
-                    <!-- Filtro Estado -->
-                    <div class="filter-group">
-                        <label class="filter-label">
-                            <span class="mdi mdi-check-circle text-teal-400 mr-2"></span>
-                            Estado
-                        </label>
-                        <div class="filter-select-wrapper">
-                            <select id="filter-estado" class="filter-select">
-                                <option value="">Todos los estados</option>
-                                <option value="PROBLEM">🔴 Problem</option>
-                                <option value="RESOLVED">🟢 Resolved</option>
-                            </select>
-                            <span class="filter-select-arrow mdi mdi-chevron-down"></span>
-                        </div>
-                    </div>
-                    
-                    <!-- Filtro Fecha -->
-                    <div class="filter-group">
-                        <label class="filter-label">
-                            <span class="mdi mdi-calendar text-pink-400 mr-2"></span>
-                            Fecha
-                        </label>
-                        <div class="filter-input-wrapper">
-                            <span class="filter-input-icon mdi mdi-calendar-today"></span>
-                            <input type="date" id="filter-fecha" class="filter-input filter-date">
-                        </div>
-                    </div>
-                </div>
-                
-                <!-- Filtros de Hora (Segunda fila) -->
-                <div class="mt-6 pt-6 border-t border-cyber-blue/10">
-                    <div class="flex items-center gap-3 mb-6">
-                        <div class="bg-gradient-to-br from-indigo-600 to-purple-600 rounded-xl p-2 shadow-lg">
-                            <span class="mdi mdi-clock-time-four text-lg text-white"></span>
-                        </div>
-                        <div>
-                            <h4 class="text-lg font-semibold text-white">Filtros de Hora</h4>
-                            <p class="text-sm text-gray-400">Filtrar eventos por rango horario específico</p>
-                        </div>
-                    </div>
-                    
-                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                    
-                    <!-- Filtro Hora Específica -->
-                    <div class="filter-group">
-                        <label class="filter-label">
-                            <span class="mdi mdi-clock-outline text-indigo-400 mr-2"></span>
-                            Hora Específica
-                        </label>
-                        <div class="filter-select-wrapper">
-                            <select id="filter-hora" class="filter-select">
-                                <option value="">Todas las horas</option>
-                            </select>
-                            <span class="filter-select-arrow mdi mdi-chevron-down"></span>
-                        </div>
-                    </div>
-                    
-                    <!-- Filtro Hora Desde -->
-                    <div class="filter-group">
-                        <label class="filter-label">
-                            <span class="mdi mdi-clock-start text-emerald-400 mr-2"></span>
-                            Desde Hora
-                        </label>
-                        <div class="filter-input-wrapper">
-                            <span class="filter-input-icon mdi mdi-clock-time-two"></span>
-                            <input type="time" id="filter-hora-desde" class="filter-input filter-date">
-                        </div>
-                    </div>
-                    
-                    <!-- Filtro Hora Hasta -->
-                    <div class="filter-group">
-                        <label class="filter-label">
-                            <span class="mdi mdi-clock-end text-rose-400 mr-2"></span>
-                            Hasta Hora
-                        </label>
-                        <div class="filter-input-wrapper">
-                            <span class="filter-input-icon mdi mdi-clock-time-eight"></span>
-                            <input type="time" id="filter-hora-hasta" class="filter-input filter-date">
-                        </div>
-                    </div>
-                    </div>
-                </div>
-
             <!-- Controles de la tabla -->
             <div class="glass-card p-6 mb-6" data-aos="fade-up" data-aos-delay="200">
-                        <div class="flex items-center justify-between">
+                <div class="flex items-center justify-between">
                     <div class="flex items-center gap-4">
                         <div class="record-counter">
                             <span class="mdi mdi-database mr-2"></span>
                             <span id="total-records">0</span> registros
-                            <span id="filtered-records" class="text-gray-400 ml-2">(sin filtros)</span>
-                  </div>
-                  </div>
-              </div>
+                        </div>
+                    </div>
+                </div>
             </div>
 
             <!-- Tabla de eventos -->
@@ -1129,19 +946,46 @@ $rol_actual = 'Supervisor';
                                 <th><span class="mdi mdi-clock mr-2"></span>Hora</th>
                                 <th><span class="mdi mdi-signal mr-2"></span>Estado</th>
                                 <th><span class="mdi mdi-tag mr-2"></span>Tipo</th>
-                                <th><span class="mdi mdi-server mr-2"></span>INTF</th>
+                                <th><span class="mdi mdi-server mr-2"></span>HOST</th>
+                                <th><span class="mdi mdi-ethernet mr-2"></span>PON/LOG</th>
                                 <th><span class="mdi mdi-account mr-2"></span>DNI</th>
-                                <th><span class="mdi mdi-information mr-2"></span>Descripción</th>
+                                <th><span class="mdi mdi-information mr-2"></span>Acciones</th>
                             </tr>
                         </thead>
                         <tbody id="events-tbody">
                             <!-- Los datos se cargarán aquí dinámicamente -->
                         </tbody>
                     </table>
-          </div>
-      </div>
+                </div>
+            </div>
             </div>
   </main>
+  </div>
+
+  <!-- Modal para mostrar datos del cliente -->
+  <div id="cliente-modal" class="fixed inset-0 bg-black bg-opacity-50 hidden z-50 flex items-center justify-center p-4">
+    <div class="glass-card max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+      <div class="p-6">
+        <div class="flex items-center justify-between mb-6">
+          <div class="flex items-center gap-3">
+            <div class="w-12 h-12 bg-gradient-to-br from-blue-500 to-purple-600 rounded-xl flex items-center justify-center">
+              <span class="mdi mdi-account-details text-xl text-white"></span>
+            </div>
+            <div>
+              <h3 class="text-xl font-bold text-white">Información del Cliente</h3>
+              <p class="text-sm text-gray-400">Datos obtenidos de PostgreSQL</p>
+            </div>
+          </div>
+          <button id="close-modal" class="text-gray-400 hover:text-white transition-colors">
+            <span class="mdi mdi-close text-2xl"></span>
+          </button>
+        </div>
+        
+        <div id="cliente-content" class="space-y-4">
+          <!-- Los datos del cliente se cargarán aquí -->
+        </div>
+      </div>
+    </div>
   </div>
 
   <script>
@@ -1162,70 +1006,10 @@ $rol_actual = 'Supervisor';
     setInterval(cargarDatosEventos, <?= $config['update']['interval_seconds'] * 1000 ?>);
   });
 
-  // Variables globales para datos y filtros
+  // Variables globales para datos
   let allEventsData = [];
-  let filteredEventsData = [];
   let lastUpdateTime = null;
   let newEventIds = new Set();
-
-  // Función para actualizar el select de hosts
-  function actualizarSelectHosts() {
-    const hostSelect = document.getElementById('filter-host');
-    const currentValue = hostSelect.value;
-    
-    // Obtener hosts únicos de los datos
-    const uniqueHosts = [...new Set(allEventsData.map(event => event.HOST))].sort();
-    
-    // Limpiar opciones existentes (excepto la primera)
-    hostSelect.innerHTML = '<option value="">Todas las OLT</option>';
-    
-    // Agregar hosts únicos
-    uniqueHosts.forEach(host => {
-      const option = document.createElement('option');
-      option.value = host;
-      option.textContent = host;
-      hostSelect.appendChild(option);
-    });
-    
-    // Restaurar valor seleccionado si existe
-    if (currentValue && uniqueHosts.includes(currentValue)) {
-      hostSelect.value = currentValue;
-    }
-  }
-
-  // Función para actualizar el select de horas
-  function actualizarSelectHoras() {
-    const horaSelect = document.getElementById('filter-hora');
-    const currentValue = horaSelect.value;
-    
-    // Obtener horas únicas de los datos (formato HH:00)
-    const uniqueHours = [...new Set(allEventsData.map(event => {
-      const eventTime = new Date(event.TIME);
-      return String(eventTime.getHours()).padStart(2, '0') + ':00';
-    }))].sort();
-    
-    // Limpiar opciones existentes (excepto la primera)
-    horaSelect.innerHTML = '<option value="">Todas las horas</option>';
-    
-    // Agregar horas únicas
-    uniqueHours.forEach(hour => {
-      const option = document.createElement('option');
-      option.value = hour;
-      // Formatear para mostrar en formato 12 horas
-      const hourNum = parseInt(hour.split(':')[0]);
-      const displayHour = hourNum === 0 ? '12:00 AM' : 
-                         hourNum < 12 ? `${hourNum}:00 AM` : 
-                         hourNum === 12 ? '12:00 PM' : 
-                         `${hourNum - 12}:00 PM`;
-      option.textContent = `🕐 ${displayHour}`;
-      horaSelect.appendChild(option);
-    });
-    
-    // Restaurar valor seleccionado si existe
-    if (currentValue && uniqueHours.includes(currentValue)) {
-      horaSelect.value = currentValue;
-    }
-  }
 
   // Función para cargar datos de eventos
   async function cargarDatosEventos() {
@@ -1270,9 +1054,7 @@ $rol_actual = 'Supervisor';
             
             lastUpdateTime = currentTime;
             allEventsData = data.events;
-            actualizarSelectHosts();
-            actualizarSelectHoras();
-            aplicarFiltros();
+            actualizarTabla(allEventsData);
             document.getElementById('total-records').textContent = allEventsData.length;
         }
     } catch (error) {
@@ -1280,159 +1062,6 @@ $rol_actual = 'Supervisor';
     }
   }
 
-  // Función para extraer ODF de la descripción
-  function extraerODF(descripcion) {
-    if (!descripcion) return '';
-    
-    // Buscar patrones: O:3, ODF:15
-    const matchO = descripcion.match(/\bO:(\d+)/);
-    const matchODF = descripcion.match(/\bODF:(\d+)/);
-    
-    if (matchODF) return matchODF[1];
-    if (matchO) return matchO[1];
-    
-    return '';
-  }
-
-  // Función para extraer HILO de la descripción
-  function extraerHILO(descripcion) {
-    if (!descripcion) return '';
-    
-    // Buscar patrones: H:24, HILO:78
-    const matchH = descripcion.match(/\bH:(\d+)/);
-    const matchHILO = descripcion.match(/\bHILO:(\d+)/);
-    
-    if (matchHILO) return matchHILO[1];
-    if (matchH) return matchH[1];
-    
-    return '';
-  }
-
-  // Función para aplicar filtros
-  function aplicarFiltros() {
-    const hostFilter = document.getElementById('filter-host').value;
-    const ponFilter = document.getElementById('filter-pon').value.toLowerCase();
-    const dniFilter = document.getElementById('filter-dni').value.toLowerCase();
-    const odfFilter = document.getElementById('filter-odf').value.toLowerCase();
-    const hiloFilter = document.getElementById('filter-hilo').value.toLowerCase();
-    const tipoFilter = document.getElementById('filter-tipo').value;
-    const estadoFilter = document.getElementById('filter-estado').value;
-    const fechaFilter = document.getElementById('filter-fecha').value;
-    const horaFilter = document.getElementById('filter-hora').value;
-    const horaDesdeFilter = document.getElementById('filter-hora-desde').value;
-    const horaHastaFilter = document.getElementById('filter-hora-hasta').value;
-
-    filteredEventsData = allEventsData.filter(event => {
-      // Filtro por Host
-      if (hostFilter && event.HOST !== hostFilter) {
-        return false;
-      }
-
-      // Filtro por PON/LOG
-      const ponLog = (event['PON/LOG'] || event.GPON || '').toLowerCase();
-      if (ponFilter && !ponLog.includes(ponFilter)) {
-        return false;
-      }
-
-      // Filtro por DNI
-      if (dniFilter && !event.DNI.toLowerCase().includes(dniFilter)) {
-        return false;
-      }
-
-      // Filtro por ODF (solo para eventos de CAIDA DE HILO)
-      if (odfFilter && event.TIPO === 'CAIDA DE HILO') {
-        const odfEvento = extraerODF(event.DESCRIPCION || '');
-        if (!odfEvento.toLowerCase().includes(odfFilter)) {
-          return false;
-        }
-      }
-
-      // Filtro por HILO (solo para eventos de CAIDA DE HILO)
-      if (hiloFilter && event.TIPO === 'CAIDA DE HILO') {
-        const hiloEvento = extraerHILO(event.DESCRIPCION || '');
-        if (!hiloEvento.toLowerCase().includes(hiloFilter)) {
-          return false;
-        }
-      }
-
-      // Filtro por Tipo
-      if (tipoFilter && event.TIPO !== tipoFilter) {
-        return false;
-      }
-
-      // Filtro por Estado
-      if (estadoFilter && event.STATUS !== estadoFilter) {
-        return false;
-      }
-
-      // Filtro por Fecha específica
-      if (fechaFilter) {
-        const eventDate = new Date(event.TIME).toISOString().split('T')[0];
-        if (eventDate !== fechaFilter) {
-          return false;
-        }
-      }
-
-      // Filtro por Hora específica
-      if (horaFilter) {
-        const eventTime = new Date(event.TIME);
-        const eventHour = String(eventTime.getHours()).padStart(2, '0') + ':00';
-        if (eventHour !== horaFilter) {
-          return false;
-        }
-      }
-
-      // Filtro por rango de hora
-      if (horaDesdeFilter || horaHastaFilter) {
-        const eventTime = new Date(event.TIME);
-        const eventHourMinute = String(eventTime.getHours()).padStart(2, '0') + ':' + String(eventTime.getMinutes()).padStart(2, '0');
-        
-        if (horaDesdeFilter && eventHourMinute < horaDesdeFilter) {
-          return false;
-        }
-        
-        if (horaHastaFilter && eventHourMinute > horaHastaFilter) {
-          return false;
-        }
-      }
-
-      return true;
-    });
-
-    // Actualizar contador de registros filtrados
-    const totalRecords = allEventsData.length;
-    const filteredRecords = filteredEventsData.length;
-    
-    document.getElementById('total-records').textContent = totalRecords;
-    
-    if (filteredRecords < totalRecords) {
-      document.getElementById('filtered-records').textContent = `(${filteredRecords} filtrados)`;
-      document.getElementById('filtered-records').className = 'text-yellow-400 ml-2';
-    } else {
-      document.getElementById('filtered-records').textContent = '(sin filtros)';
-      document.getElementById('filtered-records').className = 'text-gray-400 ml-2';
-    }
-
-    // Actualizar tabla con datos filtrados
-    actualizarTabla(filteredEventsData);
-  }
-
-  // Función para limpiar filtros
-  function limpiarFiltros() {
-    document.getElementById('filter-host').value = '';
-    document.getElementById('filter-pon').value = '';
-    document.getElementById('filter-dni').value = '';
-    document.getElementById('filter-odf').value = '';
-    document.getElementById('filter-hilo').value = '';
-    document.getElementById('filter-tipo').value = '';
-    document.getElementById('filter-estado').value = '';
-    document.getElementById('filter-fecha').value = '';
-    document.getElementById('filter-hora').value = '';
-    document.getElementById('filter-hora-desde').value = '';
-    document.getElementById('filter-hora-hasta').value = '';
-    
-    aplicarFiltros();
-  }
 
   // Función para actualizar la tabla
   function actualizarTabla(events) {
@@ -1441,7 +1070,7 @@ $rol_actual = 'Supervisor';
     if (events.length === 0) {
         tbody.innerHTML = `
             <tr>
-                <td colspan="6" class="text-center py-8 text-gray-400">
+                <td colspan="7" class="text-center py-8 text-gray-400">
                     <span class="mdi mdi-check-circle text-green-400 text-2xl mb-2 block"></span>
                     No se encontraron eventos - Todos los sistemas operativos
                 </td>
@@ -1450,196 +1079,41 @@ $rol_actual = 'Supervisor';
         return;
     }
 
-    // Identificar grupos de eventos simultáneos con mismo HOST/SLOT/PORT
-    const gruposSimultaneos = identificarGruposSimultaneos(events);
-
-    // Agrupar eventos por hora
-    const eventsByHour = {};
-    events.forEach(event => {
-        const eventTime = new Date(event.TIME);
-        const hourKey = eventTime.getFullYear() + '-' + 
-                       String(eventTime.getMonth() + 1).padStart(2, '0') + '-' + 
-                       String(eventTime.getDate()).padStart(2, '0') + ' ' + 
-                       String(eventTime.getHours()).padStart(2, '0') + ':00:00';
-        
-        if (!eventsByHour[hourKey]) {
-            eventsByHour[hourKey] = [];
-        }
-        eventsByHour[hourKey].push(event);
-    });
-
-    // Generar HTML con separadores por hora
+    // Generar HTML de la tabla básica
     let html = '';
-    const sortedHours = Object.keys(eventsByHour).sort((a, b) => new Date(b) - new Date(a));
     
-    sortedHours.forEach((hourKey, hourIndex) => {
-        const hourEvents = eventsByHour[hourKey];
-        const hourDate = new Date(hourKey);
-        const hourLabel = hourDate.toLocaleString('en-US', {
-            year: 'numeric',
-            month: '2-digit',
-            day: '2-digit',
-            hour: 'numeric',
-            minute: '2-digit',
-            second: '2-digit',
-            hour12: true,
-            timeZone: 'America/Lima'
-        }).replace(/(\d{2})\/(\d{2})\/(\d{4}), (\d{1,2}):(\d{2}):(\d{2}) (AM|PM)/, '$3-$1-$2 $4:$5:$6 $7');
-
-        // Agregar separador de hora
-        if (hourIndex > 0) {
-            html += `
-                <tr class="hour-separator">
-                    <td colspan="6" class="hour-separator-cell">
-                        <div class="hour-separator-content">
-                            <span class="mdi mdi-clock-outline mr-2"></span>
-                            ${hourLabel}
-                        </div>
-                    </td>
-                </tr>
-            `;
-        }
-
-            // Agregar eventos de esta hora
-        hourEvents.forEach(event => {
-            const statusClass = event.STATUS === 'PROBLEM' ? 'status-problem' : 'status-resolved';
-            const typeClass = getTypeClass(event.TIPO);
-            const dni = event.DNI && event.DNI !== 'N/A' ? event.DNI : '-';
-            
-            // Mejorar la descripción para eventos de CAIDA DE HILO
-            let descripcion = event.DNI && event.DNI !== 'N/A' ? '-' : (event.DESCRIPCION || '-');
-            if (event.TIPO === 'CAIDA DE HILO' && event.DESCRIPCION) {
-                const odf = extraerODF(event.DESCRIPCION);
-                const hilo = extraerHILO(event.DESCRIPCION);
-                if (odf || hilo) {
-                    // Extraer la parte base (antes de -O: o -ODF:)
-                    const baseMatch = event.DESCRIPCION.match(/^(.*?)(?:-O:\d+|-ODF:\d+)/);
-                    const basePart = baseMatch ? baseMatch[1] : event.DESCRIPCION;
-                    
-                    const baseText = `<span class="inline-block bg-gray-600/30 text-gray-200 px-3 py-1 rounded-lg text-sm font-mono mr-2">${basePart}</span>`;
-                    const odfText = odf ? `<span class="inline-block bg-blue-500/20 text-blue-300 px-2 py-1 rounded-lg text-xs mr-1 font-semibold">ODF:${odf}</span>` : '';
-                    const hiloText = hilo ? `<span class="inline-block bg-yellow-500/20 text-yellow-300 px-2 py-1 rounded-lg text-xs mr-1 font-semibold">HILO:${hilo}</span>` : '';
-                    
-                    descripcion = `<div class="flex flex-wrap items-center justify-center gap-2 py-1">
-                        ${baseText}${odfText}${hiloText}
-                    </div>`;
-                }
-            }
-            
-            // Crear PON/LOG combinado: HOST/PON/LOG
-            const ponLogCombinado = event.HOST + '/' + (event['PON/LOG'] || event.GPON || '-');
-            
-            // Verificar si es un evento nuevo
-            const eventId = event.HOST + '_' + (event['PON/LOG'] || event.GPON || '') + '_' + event.TIME;
-            const isNewEvent = newEventIds.has(eventId);
-            const statusBlinkClass = isNewEvent ? 'new-status-blink' : '';
-
-            // Obtener clase de color de grupo si pertenece a un grupo simultáneo
-            const groupColorClass = obtenerColorGrupo(event, gruposSimultaneos);
-
-            // Crear enlace para DNI si no es '-' o 'N/A'
-            const dniContent = (dni !== '-' && dni !== 'N/A') ? 
-                `<div class="flex items-center justify-center gap-2">
-                    <span class="font-mono">${dni}</span>
-                    <a href="../noc/client_final.php?dni_ruc=${encodeURIComponent(dni)}&auto_search=1" 
-                       target="_blank" 
-                       class="dni-link-icon inline-flex items-center justify-center w-6 h-6 rounded-full bg-blue-500/20 hover:bg-blue-500/40 text-blue-400 hover:text-blue-300"
-                       title="Buscar cliente en NOC">
-                        <span class="mdi mdi-account-search text-sm"></span>
-                    </a>
-                </div>` : dni;
-
-            // Crear enlace para INTF (HOST/SLOT/PORT) si tiene datos válidos
-            const ponLogEvento = event['PON/LOG'] || event.GPON || '';
-            const intfContent = (event.HOST && ponLogEvento && ponLogEvento !== '-') ? 
-                `<div class="flex items-center justify-center gap-2">
-                    <span class="font-mono">${ponLogCombinado}</span>
-                    <a href="../noc/olt_status.php?olt=${encodeURIComponent(event.HOST)}&slot_port=${encodeURIComponent(ponLogEvento.split('/').slice(0, 2).join('/'))}&autoload=1&highlight_dni=${encodeURIComponent(dni)}" 
-                       target="_blank" 
-                       class="intf-link-icon inline-flex items-center justify-center w-6 h-6 rounded-full bg-purple-500/20 hover:bg-purple-500/40 text-purple-400 hover:text-purple-300"
-                       title="Ver Thread Status en OLT">
-                        <span class="mdi mdi-chart-box text-sm"></span>
-                    </a>
-                </div>` : ponLogCombinado;
-
-            html += `
-                <tr class="${groupColorClass}">
-                    <td>${event.TIME}</td>
-                    <td><span class="status-badge ${statusClass} ${statusBlinkClass}">${event.STATUS}</span></td>
-                    <td><span class="type-badge ${typeClass}">${event.TIPO}</span></td>
-                    <td>${intfContent}</td>
-                    <td>${dniContent}</td>
-                    <td>${descripcion}</td>
-                </tr>
-            `;
-        });
+    events.forEach(event => {
+        const statusClass = event.STATUS === 'PROBLEM' ? 'status-problem' : 'status-resolved';
+        const typeClass = getTypeClass(event.TIPO);
+        const dni = event.DNI && event.DNI !== 'N/A' ? event.DNI : '-';
+        const host = event.HOST || '-';
+        const ponLog = event['PON/LOG'] || event.GPON || '-';
+        
+        // Crear PON/LOG para la consulta a PostgreSQL (formato: HOST/PON/LOG)
+        const ponLogForQuery = host + '/' + ponLog;
+        
+        html += `
+            <tr>
+                <td class="font-mono text-sm">${event.TIME}</td>
+                <td><span class="status-badge ${statusClass}">${event.STATUS}</span></td>
+                <td><span class="type-badge ${typeClass}">${event.TIPO}</span></td>
+                <td class="font-mono text-sm">${host}</td>
+                <td class="font-mono text-sm">${ponLog}</td>
+                <td class="font-mono text-sm">${dni}</td>
+                <td>
+                    <button onclick="mostrarDatosCliente('${ponLogForQuery}')" 
+                            class="inline-flex items-center gap-2 px-3 py-2 bg-blue-500/20 hover:bg-blue-500/30 text-blue-400 hover:text-blue-300 rounded-lg transition-all duration-200 text-sm font-medium">
+                        <span class="mdi mdi-account-details"></span>
+                        <span>Ver Cliente</span>
+                    </button>
+                </td>
+            </tr>
+        `;
     });
 
     tbody.innerHTML = html;
   }
 
-  // Función para identificar grupos de eventos simultáneos
-  function identificarGruposSimultaneos(events) {
-    const grupos = {};
-    let colorIndex = 1;
-    
-    events.forEach(event => {
-        const eventTime = new Date(event.TIME);
-        // Crear clave para fecha-hora-minuto
-        const fechaHoraMinuto = eventTime.getFullYear() + '-' + 
-                              String(eventTime.getMonth() + 1).padStart(2, '0') + '-' + 
-                              String(eventTime.getDate()).padStart(2, '0') + ' ' + 
-                              String(eventTime.getHours()).padStart(2, '0') + ':' + 
-                              String(eventTime.getMinutes()).padStart(2, '0');
-        
-        // Crear clave para HOST/SLOT/PORT (sin el último número que es el ONU)
-        const ponLog = event['PON/LOG'] || event.GPON || '';
-        const hostSlotPort = event.HOST + '/' + ponLog.split('/').slice(0, 2).join('/');
-        
-        // Crear clave única para el grupo: fecha-hora-minuto + HOST/SLOT/PORT
-        const grupoKey = fechaHoraMinuto + '|' + hostSlotPort;
-        
-        if (!grupos[grupoKey]) {
-            grupos[grupoKey] = {
-                colorIndex: colorIndex,
-                eventos: []
-            };
-            colorIndex = (colorIndex % 10) + 1; // Ciclar entre 1-10 colores
-        }
-        
-        grupos[grupoKey].eventos.push(event);
-    });
-    
-    // Filtrar solo grupos que tengan más de 1 evento (eventos simultáneos)
-    const gruposFiltrados = {};
-    Object.keys(grupos).forEach(key => {
-        if (grupos[key].eventos.length > 1) {
-            gruposFiltrados[key] = grupos[key];
-        }
-    });
-    
-    return gruposFiltrados;
-  }
-
-  // Función para obtener la clase de color de grupo para un evento
-  function obtenerColorGrupo(event, gruposSimultaneos) {
-    const eventTime = new Date(event.TIME);
-    const fechaHoraMinuto = eventTime.getFullYear() + '-' + 
-                           String(eventTime.getMonth() + 1).padStart(2, '0') + '-' + 
-                           String(eventTime.getDate()).padStart(2, '0') + ' ' + 
-                           String(eventTime.getHours()).padStart(2, '0') + ':' + 
-                           String(eventTime.getMinutes()).padStart(2, '0');
-    
-    const ponLog = event['PON/LOG'] || event.GPON || '';
-    const hostSlotPort = event.HOST + '/' + ponLog.split('/').slice(0, 2).join('/');
-    const grupoKey = fechaHoraMinuto + '|' + hostSlotPort;
-    
-    if (gruposSimultaneos[grupoKey]) {
-        return `group-color-${gruposSimultaneos[grupoKey].colorIndex}`;
-    }
-    
-    return ''; // Sin color de grupo
-  }
 
   // Función para obtener la clase CSS del tipo
   function getTypeClass(tipo) {
@@ -1655,21 +1129,6 @@ $rol_actual = 'Supervisor';
     }
   }
 
-  // Event listeners para filtros
-  document.getElementById('filter-host').addEventListener('change', aplicarFiltros);
-  document.getElementById('filter-pon').addEventListener('input', aplicarFiltros);
-  document.getElementById('filter-dni').addEventListener('input', aplicarFiltros);
-  document.getElementById('filter-odf').addEventListener('input', aplicarFiltros);
-  document.getElementById('filter-hilo').addEventListener('input', aplicarFiltros);
-  document.getElementById('filter-tipo').addEventListener('change', aplicarFiltros);
-  document.getElementById('filter-estado').addEventListener('change', aplicarFiltros);
-  document.getElementById('filter-fecha').addEventListener('change', aplicarFiltros);
-  document.getElementById('filter-hora').addEventListener('change', aplicarFiltros);
-  document.getElementById('filter-hora-desde').addEventListener('change', aplicarFiltros);
-  document.getElementById('filter-hora-hasta').addEventListener('change', aplicarFiltros);
-  
-  // Event listener para limpiar filtros
-  document.getElementById('clear-filters-btn').addEventListener('click', limpiarFiltros);
 
   // Función para limpiar eventos antiguos del set de eventos nuevos
   function limpiarEventosAntiguos() {
@@ -1726,6 +1185,153 @@ $rol_actual = 'Supervisor';
   setInterval(actualizarHoraPeru, 1000);
   actualizarHoraUsuario();
   actualizarHoraPeru();
+
+  // Función para mostrar datos del cliente
+  async function mostrarDatosCliente(ponLog) {
+    const modal = document.getElementById('cliente-modal');
+    const content = document.getElementById('cliente-content');
+    
+    // Mostrar modal con loading
+    content.innerHTML = `
+      <div class="flex items-center justify-center py-8">
+        <div class="loading-indicator"></div>
+        <span class="ml-3 text-gray-400">Buscando datos del cliente...</span>
+      </div>
+    `;
+    modal.classList.remove('hidden');
+    
+    try {
+      const response = await fetch('api/get_cliente_data.php', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          pon_log: ponLog
+        })
+      });
+      
+      const data = await response.json();
+      
+      if (data.success && data.cliente) {
+        const cliente = data.cliente;
+        content.innerHTML = `
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <!-- Información Personal -->
+            <div class="space-y-4">
+              <h4 class="text-lg font-semibold text-white flex items-center gap-2">
+                <span class="mdi mdi-account text-blue-400"></span>
+                Información Personal
+              </h4>
+              <div class="space-y-3">
+                <div class="flex justify-between">
+                  <span class="text-gray-400">Cliente:</span>
+                  <span class="text-white font-medium">${cliente.cliente || 'N/A'}</span>
+                </div>
+                <div class="flex justify-between">
+                  <span class="text-gray-400">DNI/RUC:</span>
+                  <span class="text-white font-mono">${cliente.dni_ruc || 'N/A'}</span>
+                </div>
+                <div class="flex justify-between">
+                  <span class="text-gray-400">Teléfono:</span>
+                  <span class="text-white">${cliente.telefono || 'N/A'}</span>
+                </div>
+                <div class="flex justify-between">
+                  <span class="text-gray-400">Email:</span>
+                  <span class="text-white">${cliente.correo_electronico || 'N/A'}</span>
+                </div>
+              </div>
+            </div>
+            
+            <!-- Información de Ubicación -->
+            <div class="space-y-4">
+              <h4 class="text-lg font-semibold text-white flex items-center gap-2">
+                <span class="mdi mdi-map-marker text-green-400"></span>
+                Ubicación
+              </h4>
+              <div class="space-y-3">
+                <div class="flex justify-between">
+                  <span class="text-gray-400">Dirección:</span>
+                  <span class="text-white text-right">${cliente.nombre_direccion || 'N/A'}</span>
+                </div>
+                <div class="flex justify-between">
+                  <span class="text-gray-400">Distrito:</span>
+                  <span class="text-white">${cliente.distrito || 'N/A'}</span>
+                </div>
+                <div class="flex justify-between">
+                  <span class="text-gray-400">Provincia:</span>
+                  <span class="text-white">${cliente.provincia || 'N/A'}</span>
+                </div>
+                ${cliente.ubicacion ? `
+                <div class="mt-4">
+                  <a href="${cliente.ubicacion}" target="_blank" 
+                     class="inline-flex items-center gap-2 px-4 py-2 bg-green-500/20 hover:bg-green-500/30 text-green-400 hover:text-green-300 rounded-lg transition-all duration-200">
+                    <span class="mdi mdi-google-maps"></span>
+                    <span>Ver en Google Maps</span>
+                  </a>
+                </div>
+                ` : ''}
+              </div>
+            </div>
+            
+            <!-- Información Técnica -->
+            <div class="space-y-4 md:col-span-2">
+              <h4 class="text-lg font-semibold text-white flex items-center gap-2">
+                <span class="mdi mdi-cog text-purple-400"></span>
+                Información Técnica
+              </h4>
+              <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                <div class="text-center p-3 bg-gray-800/50 rounded-lg">
+                  <div class="text-gray-400 text-sm">PON/LOG</div>
+                  <div class="text-white font-mono text-sm">${cliente.pon_log || 'N/A'}</div>
+                </div>
+                <div class="text-center p-3 bg-gray-800/50 rounded-lg">
+                  <div class="text-gray-400 text-sm">Troncal</div>
+                  <div class="text-white font-mono text-sm">${cliente.troncal || 'N/A'}</div>
+                </div>
+                <div class="text-center p-3 bg-gray-800/50 rounded-lg">
+                  <div class="text-gray-400 text-sm">ODF</div>
+                  <div class="text-white font-mono text-sm">${cliente.odf || 'N/A'}</div>
+                </div>
+                <div class="text-center p-3 bg-gray-800/50 rounded-lg">
+                  <div class="text-gray-400 text-sm">Hilo</div>
+                  <div class="text-white font-mono text-sm">${cliente.nro_hilo || 'N/A'}</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        `;
+      } else {
+        content.innerHTML = `
+          <div class="text-center py-8">
+            <span class="mdi mdi-alert-circle text-yellow-400 text-4xl mb-4 block"></span>
+            <h4 class="text-lg font-semibold text-white mb-2">Cliente no encontrado</h4>
+            <p class="text-gray-400">No se encontraron datos del cliente para PON/LOG: ${ponLog}</p>
+          </div>
+        `;
+      }
+    } catch (error) {
+      content.innerHTML = `
+        <div class="text-center py-8">
+          <span class="mdi mdi-alert-circle text-red-400 text-4xl mb-4 block"></span>
+          <h4 class="text-lg font-semibold text-white mb-2">Error al cargar datos</h4>
+          <p class="text-gray-400">No se pudo obtener la información del cliente</p>
+        </div>
+      `;
+    }
+  }
+
+  // Event listeners para el modal
+  document.getElementById('close-modal').addEventListener('click', function() {
+    document.getElementById('cliente-modal').classList.add('hidden');
+  });
+
+  // Cerrar modal al hacer clic fuera de él
+  document.getElementById('cliente-modal').addEventListener('click', function(e) {
+    if (e.target === this) {
+      this.classList.add('hidden');
+    }
+  });
   </script>
 
   <!-- Sistema de Notificaciones - Script simplificado y estático -->
