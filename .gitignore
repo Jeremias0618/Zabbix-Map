@@ -1,0 +1,42 @@
+# Archivos de configuración sensibles
+include/config_local.php
+config_local.php
+
+# Logs
+logs/
+*.log
+
+# Archivos temporales
+*.tmp
+*.temp
+
+# Archivos de estadísticas
+api/statistics/
+
+# Archivos de sesión
+sessions/
+
+# Archivos de cache
+cache/
+
+# Archivos de entorno
+.env
+.env.local
+
+# Archivos de IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Archivos del sistema
+.DS_Store
+Thumbs.db
+
+# Archivos de backup
+*.bak
+*.backup
+
+# Archivos de configuración específicos del servidor
+config_production.php
+config_development.php
