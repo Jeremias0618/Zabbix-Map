@@ -38,7 +38,7 @@ date_default_timezone_set($config['app']['timezone']);
                     <div class="flex items-center justify-center gap-3">
                         <span class="mdi mdi-database text-2xl"></span>
                         <span>Datos Básicos</span>
-                    </div>
+            </div>
                 </a>
                 
                 <a href="configuration.php" class="bg-green-600 hover:bg-green-700 text-white font-bold py-4 px-6 rounded-lg transition duration-200">
