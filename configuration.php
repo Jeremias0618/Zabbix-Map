@@ -8,7 +8,6 @@
  * - Configuraciones generales de la aplicación
  */
 
-// Iniciar sesión
 session_start();
 
 $config = require_once 'include/config.php';
@@ -16,6 +15,7 @@ $config = require_once 'include/config.php';
 $version = trim(file_get_contents('VERSION'));
 
 date_default_timezone_set($config['app']['timezone']);
+$currentPage = basename($_SERVER['PHP_SELF']);
 
 require_once(__DIR__ . '/include/ZabbixApi.php');
 use IntelliTrend\Zabbix\ZabbixApi;
@@ -249,8 +249,44 @@ $dbPass = $currentConfig['database']['pass'] ?? '';
         }
     </style>
 </head>
-<body class="min-h-screen flex items-center justify-center p-4">
-    <div class="w-full max-w-4xl">
+<body class="min-h-screen bg-[#0a0e17] bg-gradient-to-br from-gray-950 via-slate-900 to-gray-950 text-white overflow-x-hidden">
+    <header class="h-16 bg-gradient-to-r from-cyber-dark/40 to-cyber-dark/30 backdrop-blur-md border-b border-white/10 sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto h-full flex items-center justify-between px-6">
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 bg-gradient-to-br from-orange-500 to-red-500 rounded-lg flex items-center justify-center">
+                    <span class="mdi mdi-react text-xl text-white"></span>
+                </div>
+                <div>
+                    <h1 class="text-xl font-bold text-white"><?= htmlspecialchars($config['app']['name']) ?></h1>
+                    <p class="text-xs text-gray-400">Configuración v<?= htmlspecialchars($version) ?></p>
+                </div>
+            </div>
+            <nav class="flex items-center gap-2">
+                <a href="index.php" class="px-4 py-2 rounded-lg transition-all duration-200 text-sm border-b-2 <?= $currentPage==='index.php' ? 'border-cyan-400 text-white' : 'border-transparent text-gray-300 hover:text-white hover:bg-cyber-blue/10' ?> flex items-center gap-2">
+                    <span class="mdi mdi-home"></span>
+                    <span>Inicio</span>
+                </a>
+                <a href="events_zabbix.php" class="px-4 py-2 rounded-lg transition-all duration-200 text-sm border-b-2 <?= $currentPage==='events_zabbix.php' ? 'border-cyan-400 text-white' : 'border-transparent text-gray-300 hover:text-white hover:bg-cyber-blue/10' ?> flex items-center gap-2">
+                    <span class="mdi mdi-chart-line"></span>
+                    <span>Eventos</span>
+                </a>
+                <a href="basic_data.php" class="px-4 py-2 rounded-lg transition-all duration-200 text-sm border-b-2 <?= $currentPage==='basic_data.php' ? 'border-cyan-400 text-white' : 'border-transparent text-gray-300 hover:text-white hover:bg-cyber-blue/10' ?> flex items-center gap-2">
+                    <span class="mdi mdi-database"></span>
+                    <span>Datos</span>
+                </a>
+                <a href="map_locator.php" class="px-4 py-2 rounded-lg transition-all duration-200 text-sm border-b-2 <?= $currentPage==='map_locator.php' ? 'border-cyan-400 text-white' : 'border-transparent text-gray-300 hover:text-white hover:bg-cyber-blue/10' ?> flex items-center gap-2">
+                    <span class="mdi mdi-map"></span>
+                    <span>Mapa</span>
+                </a>
+                <a href="configuration.php" class="px-4 py-2 rounded-lg transition-all duration-200 text-sm border-b-2 <?= $currentPage==='configuration.php' ? 'border-cyan-400 text-white' : 'border-transparent text-gray-300 hover:text-white hover:bg-cyber-blue/10' ?> flex items-center gap-2">
+                    <span class="mdi mdi-wrench"></span>
+                    <span>Configuración</span>
+                </a>
+            </nav>
+        </div>
+    </header>
+    <main class="px-6 py-10">
+    <div class="w-full max-w-4xl mx-auto">
         <!-- Header -->
         <div class="text-center mb-8">
             <div class="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-br from-blue-500 to-purple-600 rounded-2xl mb-4">
@@ -404,5 +440,6 @@ $dbPass = $currentConfig['database']['pass'] ?? '';
             <p class="mt-2">Se realizarán pruebas de conexión automáticas al guardar</p>
         </div>
     </div>
+    </main>
 </body>
 </html>

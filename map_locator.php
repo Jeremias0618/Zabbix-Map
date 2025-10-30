@@ -10,7 +10,6 @@
     <style>
         html, body { height: 100%; margin: 0; }
         #map { height: 100vh; width: 100vw; }
-        /* Ocultar borde/fondo por defecto de divIcon para que no aparezca un cuadro encima */
         .mdi-marker.leaflet-div-icon { background: transparent; border: none; }
         .mdi-marker { line-height: 0; }
     </style>
@@ -18,7 +17,6 @@
 <body>
     <div id="map"></div>
 
-    <!-- Caja de contador de marcadores en el mapa (en tiempo real) -->
     <div id="marker-counter" style="position:fixed;top:12px;right:12px;z-index:1000;background:rgba(0,0,0,0.7);color:#fff;padding:10px 14px;border-radius:10px;display:flex;align-items:center;gap:8px;font-family:system-ui,-apple-system,Segoe UI,Roboto,Inter,Arial,sans-serif;">
         <span class="mdi mdi-map-marker-multiple" style="font-size:20px;color:#ef4444"></span>
         <span style="opacity:.85">Equipos alarmados:</span>
@@ -27,17 +25,14 @@
 
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script>
-        // Inicializar mapa OSM
         const map = L.map('map').setView([-12.0464, -77.0428], 12);
         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
             maxZoom: 19,
             attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
         }).addTo(map);
 
-        // Estado de marcadores actuales (clave -> marker)
         const markersByKey = {};
 
-        // Icono personalizado usando MDI account-circle en rojo
         function createAccountIcon() {
             return L.divIcon({
                 className: 'mdi-marker',
@@ -50,7 +45,6 @@
 
         function addOrUpdateMarker(key, lat, lon, popupHtml) {
             if (markersByKey[key]) {
-                // mantener existente; opcionalmente actualizar popup
                 if (popupHtml) markersByKey[key].bindPopup(popupHtml);
                 return;
             }
@@ -67,13 +61,11 @@
             }
         }
 
-        // Extraer coordenadas desde una URL de Google Maps (robusto)
         function extractLatLon(url) {
             if (!url) return null;
             let u = url.trim();
             try { u = decodeURIComponent(u); } catch(e) {}
 
-            // Prioridad: coordenadas específicas del lugar (!3d !4d), luego variantes, luego @, luego query params, luego DMS
             const patterns = [
                 /!3d(-?\d+\.\d+)!4d(-?\d+\.\d+)/,           // !3dlat!4dlon
                 /3d(-?\d+\.\d+)!4d(-?\d+\.\d+)/,            // 3dlat!4dlon
@@ -92,7 +84,6 @@
                 }
             }
 
-            // Intentar extraer coordenadas DMS (formato degrees/minutes/seconds en la URL)
             const dms = u.match(/place\/(\d+)%C2%B0(\d+)'([\d.]+)%22S\+(\d+)%C2%B0(\d+)'([\d.]+)%22W/);
             if (dms) {
                 const latDeg = parseInt(dms[1]);
@@ -111,18 +102,14 @@
             return null;
         }
 
-        // addMarker ya no es necesario; usar addOrUpdateMarker(key,...)
 
-        // Construir clave completa pon_log: HOST + '/' + PONLOG
         function buildPonLogFull(host, ponLog) {
             if (!host || !ponLog) return null;
             return host + '/' + ponLog;
         }
 
-        // Distinguir si es evento individual (HOST/SLOT/PORT/LOG) o caida de hilo (HOST/SLOT/PORT)
         function isIndividualPon(pon) {
             if (!pon) return false;
-            // cuenta de segmentos por '/'
             const parts = pon.split('/');
             return parts.length >= 3; // típicamente SLOT/PORT/LOG
         }
@@ -144,35 +131,27 @@
 
         async function loadAndRender() {
             try {
-                // 1) Obtener eventos Zabbix actuales
                 const eventsResp = await fetchJson('api/get_events_data.php');
                 if (!eventsResp.success) return;
 
-                // 2) Filtrar solo PROBLEM
                 const problemEvents = (eventsResp.events || []).filter(e => e.STATUS === 'PROBLEM');
-                // Debug general (limitar tamaño)
                 console.log('[MAP] PROBLEM events:', problemEvents.length);
 
-                // 3) Determinar claves deseadas en este ciclo
                 const desiredKeys = new Set();
 
-                // 4) Procesar cada evento
                 for (const ev of problemEvents) {
                     const host = ev.HOST;
                     const pon = ev['PON/LOG'] || ev.GPON || '';
 
                     if (!host || !pon) continue;
 
-                    // Desactivar marcado para eventos de CAIDA DE HILO
                     if (ev.TIPO === 'CAIDA DE HILO') {
                         continue;
                     }
 
                     if (isIndividualPon(pon)) {
-                        // Caso individual: búsqueda exacta por HOST/SLOT/PORT/LOG
                         const full = buildPonLogFull(host, pon);
                         if (!full) continue;
-                        // clave única del evento en el mapa
                         const key = full; // HOST/SLOT/PORT/LOG
                         if (desiredKeys.has(key)) continue; // evitar duplicados en este ciclo
                         desiredKeys.add(key);
@@ -193,18 +172,15 @@
                             }
                         }
                     } else {
-                        // No individual y no CAIDA DE HILO: omitir
                     }
                 }
 
-                // 5) Remover marcadores que ya no están en PROBLEM
                 Object.keys(markersByKey).forEach((key) => {
                     if (!desiredKeys.has(key)) {
                         removeMarker(key);
                     }
                 });
 
-                // 6) Actualizar contador en tiempo real según marcadores visibles
                 const counterEl = document.getElementById('markedCountValue');
                 if (counterEl) counterEl.textContent = String(Object.keys(markersByKey).length);
             } catch (e) {
@@ -212,7 +188,6 @@
             }
         }
 
-        // Cargar al inicio y refrescar periódicamente
         loadAndRender();
         setInterval(loadAndRender, 4000); // cada 4s
     </script>

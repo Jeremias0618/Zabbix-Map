@@ -887,16 +887,29 @@ $rol_actual = 'Supervisor';
               </div>
               
               <!-- Navegación a la derecha -->
-              <nav class="flex items-center gap-4">
-                  <a href="index.php" class="px-4 py-2 rounded-lg hover:bg-cyber-blue/10 transition-all duration-200 text-sm text-gray-300 hover:text-white flex items-center gap-2">
-                      <span class="mdi mdi-home"></span>
-                      <span>Inicio</span>
-                  </a>
-                  <a href="configuration.php" class="px-4 py-2 rounded-lg hover:bg-cyber-blue/10 transition-all duration-200 text-sm text-gray-300 hover:text-white flex items-center gap-2">
-                      <span class="mdi mdi-wrench"></span>
-                      <span>Configuración</span>
-                  </a>
-              </nav>
+<?php $currentPage = basename($_SERVER['PHP_SELF']); ?>
+                <nav class="flex items-center gap-2">
+                    <a href="index.php" class="px-4 py-2 rounded-lg transition-all duration-200 text-sm border-b-2 <?= $currentPage==='index.php' ? 'border-cyan-400 text-white' : 'border-transparent text-gray-300 hover:text-white hover:bg-cyber-blue/10' ?> flex items-center gap-2">
+                        <span class="mdi mdi-home"></span>
+                        <span>Inicio</span>
+                    </a>
+                    <a href="events_zabbix.php" class="px-4 py-2 rounded-lg transition-all duration-200 text-sm border-b-2 <?= $currentPage==='events_zabbix.php' ? 'border-cyan-400 text-white' : 'border-transparent text-gray-300 hover:text-white hover:bg-cyber-blue/10' ?> flex items-center gap-2">
+                        <span class="mdi mdi-chart-line"></span>
+                        <span>Eventos</span>
+                    </a>
+                    <a href="basic_data.php" class="px-4 py-2 rounded-lg transition-all duration-200 text-sm border-b-2 <?= $currentPage==='basic_data.php' ? 'border-cyan-400 text-white' : 'border-transparent text-gray-300 hover:text-white hover:bg-cyber-blue/10' ?> flex items-center gap-2">
+                        <span class="mdi mdi-database"></span>
+                        <span>Datos</span>
+                    </a>
+                    <a href="map_locator.php" class="px-4 py-2 rounded-lg transition-all duration-200 text-sm border-b-2 <?= $currentPage==='map_locator.php' ? 'border-cyan-400 text-white' : 'border-transparent text-gray-300 hover:text-white hover:bg-cyber-blue/10' ?> flex items-center gap-2">
+                        <span class="mdi mdi-map"></span>
+                        <span>Mapa</span>
+                    </a>
+                    <a href="configuration.php" class="px-4 py-2 rounded-lg transition-all duration-200 text-sm border-b-2 <?= $currentPage==='configuration.php' ? 'border-cyan-400 text-white' : 'border-transparent text-gray-300 hover:text-white hover:bg-cyber-blue/10' ?> flex items-center gap-2">
+                        <span class="mdi mdi-wrench"></span>
+                        <span>Configuración</span>
+                    </a>
+                </nav>
           </div>
       </header>
 
