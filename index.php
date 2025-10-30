@@ -118,6 +118,18 @@ $currentPage = basename($_SERVER['PHP_SELF']);
                     </div>
                 </a>
                     </div>
+
+            <!-- Enlaces a repositorio y creador -->
+            <div class="mt-10 flex items-center justify-center gap-4">
+                <a href="https://github.com/Jeremias0618/Zabbix-Map" target="_blank" rel="noopener" class="inline-flex items-center gap-2 px-4 py-2 rounded-lg border border-white/10 bg-white/5 hover:bg-white/10 transition-all">
+                    <span class="mdi mdi-github"></span>
+                    <span>Repositorio</span>
+                </a>
+                <a href="https://github.com/Jeremias0618" target="_blank" rel="noopener" class="inline-flex items-center gap-2 px-4 py-2 rounded-lg border border-white/10 bg-white/5 hover:bg-white/10 transition-all">
+                    <span class="mdi mdi-account-circle"></span>
+                    <span>GitHub</span>
+                </a>
+            </div>
                 </div>
     </main>
 </body>
