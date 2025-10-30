@@ -92,9 +92,6 @@ msg "Instalando y configurando UFW (Firewall)..."
 apt install -y ufw
 
 # Reglas iniciales
-ufw allow 22/tcp comment 'SSH'
-ufw allow 80/tcp comment 'HTTP'
-ufw allow 443/tcp comment 'HTTPS'
 ufw allow 10050/tcp comment 'Zabbix Agent'
 ufw allow 10051/tcp comment 'Zabbix Server'
 ufw allow 5432/tcp comment 'PostgreSQL'
@@ -103,10 +100,17 @@ ufw allow 5432/tcp comment 'PostgreSQL'
 ufw default deny incoming
 ufw default allow outgoing
 
-# Reglas adicionales restringidas por subred (opcional)
+# Reglas restringidas por subred
 ufw allow from 10.80.80.0/24 to any port 22 proto tcp comment 'SSH desde red local'
 ufw allow from 10.80.80.0/24 to any port 80 proto tcp comment 'HTTP desde red local'
 ufw allow from 10.80.80.0/24 to any port 443 proto tcp comment 'HTTPS desde red local'
+
+# Deshabilitar IPv6 en UFW para evitar reglas v6 (ya se desactivó IPv6 del sistema)
+if grep -q "^IPV6=" /etc/default/ufw; then
+  sed -i 's/^IPV6=.*/IPV6=no/' /etc/default/ufw
+else
+  echo 'IPV6=no' >> /etc/default/ufw
+fi
 
 # Activar UFW
 ufw --force enable
