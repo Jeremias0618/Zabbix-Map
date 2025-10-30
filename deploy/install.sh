@@ -57,7 +57,7 @@ systemctl restart apache2
 msg "Instalando PHP 8.1 y extensiones PDO para PostgreSQL..."
 add-apt-repository ppa:ondrej/php -y
 apt update
-apt install -y php8.1 php8.1-cli php8.1-common libapache2-mod-php8.1 php8.1-pgsql
+apt install -y php8.1 php8.1-cli php8.1-common libapache2-mod-php8.1 php8.1-pgsql php8.1-curl
 
 # Establecer PHP 8.1 como predeterminado
 update-alternatives --set php /usr/bin/php8.1
@@ -74,6 +74,13 @@ if php -m | grep -qi pdo_pgsql; then
   msg "Controlador PDO_PGSQL instalado"
 else
   warning_msg "Controlador PDO_PGSQL no detectado"
+fi
+
+# Verificación de cURL
+if php -m | grep -qi curl; then
+  msg "Extensión cURL instalada"
+else
+  warning_msg "Extensión cURL no detectada"
 fi
 
 # --- 4) PostgreSQL ---
