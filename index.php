@@ -129,7 +129,7 @@ $currentPage = basename($_SERVER['PHP_SELF']);
                     <span class="mdi mdi-account-circle"></span>
                     <span>GitHub</span>
                 </a>
-            </div>
+                    </div>
                 </div>
     </main>
 </body>
