@@ -49,6 +49,38 @@ zabbix-realtime-map/
 - Zabbix 5.0 o superior
 - Extensiones PHP: curl, json, openssl, pdo_pgsql
 
+### Instalación del servidor (install.sh)
+
+Este proyecto incluye un script de instalación para Ubuntu Server 22.04 que prepara el entorno con Apache, PHP 8.1 (PDO PostgreSQL), PostgreSQL, desactiva IPv6 y configura el firewall UFW (incluyendo reglas para SSH/HTTP/HTTPS/Zabbix/PostgreSQL y restricción de ICMP).
+
+1. Clonar el repositorio:
+
+```
+git clone https://github.com/Jeremias0618/Zabbix-Map.git
+cd Zabbix-Map
+```
+
+2. Dar permisos y ejecutar el instalador (como root):
+
+```
+sudo chmod +x deploy/install.sh
+sudo ./deploy/install.sh
+```
+
+3. Verificar servicios y firewall:
+
+```
+systemctl status apache2
+systemctl status postgresql
+sudo ufw status verbose
+```
+
+Notas:
+- El script establece PHP 8.1 como predeterminado y habilita `pdo_pgsql`.
+- UFW queda activado con políticas por defecto: deny incoming / allow outgoing.
+- ICMP (ping) se restringe por defecto a la subred `10.80.80.0/24`. Ajusta esta red en `/etc/ufw/before.rules` si lo necesitas y ejecuta `sudo ufw reload`.
+- Si necesitas permitir otros puertos o redes, añade reglas adicionales con `sudo ufw allow ...`.
+
 ## Configuración
 
 ### Zabbix

@@ -87,5 +87,61 @@ else
     error_msg "PostgreSQL no se inició correctamente"
 fi
 
+# --- 5) UFW (Firewall) ---
+msg "Instalando y configurando UFW (Firewall)..."
+apt install -y ufw
+
+# Reglas iniciales
+ufw allow 22/tcp comment 'SSH'
+ufw allow 80/tcp comment 'HTTP'
+ufw allow 443/tcp comment 'HTTPS'
+ufw allow 10050/tcp comment 'Zabbix Agent'
+ufw allow 10051/tcp comment 'Zabbix Server'
+ufw allow 5432/tcp comment 'PostgreSQL'
+
+# Políticas predeterminadas
+ufw default deny incoming
+ufw default allow outgoing
+
+# Reglas adicionales restringidas por subred (opcional)
+ufw allow from 10.80.80.0/24 to any port 22 proto tcp comment 'SSH desde red local'
+ufw allow from 10.80.80.0/24 to any port 80 proto tcp comment 'HTTP desde red local'
+ufw allow from 10.80.80.0/24 to any port 443 proto tcp comment 'HTTPS desde red local'
+
+# Activar UFW
+ufw --force enable
+
+# Restringir ICMP
+if [ -f "/etc/ufw/before.rules" ]; then
+  cp /etc/ufw/before.rules /etc/ufw/before.rules.backup
+  if grep -q "-A ufw-before-input -p icmp --icmp-type echo-request -j ACCEPT" /etc/ufw/before.rules; then
+    tmpfile=$(mktemp)
+    awk 'BEGIN{inserted=0}
+      {
+        if ($0 ~ /^# ok icmp codes for INPUT/ && inserted==0) {
+          print $0
+          print "-A ufw-before-input -s 10.80.80.0/24 -p icmp --icmp-type echo-request -j ACCEPT"
+          print "-A ufw-before-input -p icmp --icmp-type echo-request -j DROP"
+          inserted=1
+          next
+        }
+        if ($0 == "-A ufw-before-input -p icmp --icmp-type echo-request -j ACCEPT") {
+          next
+        }
+        print $0
+      }' /etc/ufw/before.rules > "$tmpfile" && mv "$tmpfile" /etc/ufw/before.rules
+  else
+    # Insertar reglas si no existe la línea estándar
+    if grep -q "^# ok icmp codes for INPUT" /etc/ufw/before.rules; then
+      sed -i '/^# ok icmp codes for INPUT/a -A ufw-before-input -s 10.80.80.0\/24 -p icmp --icmp-type echo-request -j ACCEPT\n-A ufw-before-input -p icmp --icmp-type echo-request -j DROP' /etc/ufw/before.rules
+    fi
+  fi
+  ufw reload || true
+else
+  warning_msg "No se encontró /etc/ufw/before.rules para ajustar ICMP"
+fi
+
+ufw status verbose || true
+
 msg "✅ Instalación básica terminada. Componentes listos: IPv6 desactivado, Apache, PHP 8.1 (PDO), PostgreSQL."
 exit 0
