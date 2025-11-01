@@ -231,6 +231,42 @@
         }
 
 
+        function formatEventTime(timeStr) {
+            if (!timeStr) return '';
+            // Convierte "2025-11-25 4:12:00 PM" a "2025/11/25 04:12PM"
+            try {
+                const date = new Date(timeStr);
+                if (isNaN(date.getTime())) {
+                    // Si no se puede parsear, intentar formato manual
+                    const match = timeStr.match(/(\d{4})-(\d{2})-(\d{2})\s+(\d{1,2}):(\d{2}):(\d{2})\s+(AM|PM)/i);
+                    if (match) {
+                        let year = match[1];
+                        let month = match[2];
+                        let day = match[3];
+                        let hour = parseInt(match[4]);
+                        let minute = match[5];
+                        let ampm = match[6].toUpperCase();
+                        // Asegurar formato de hora con 2 dígitos
+                        hour = hour.toString().padStart(2, '0');
+                        return `${year}/${month}/${day} ${hour}:${minute}${ampm}`;
+                    }
+                    return timeStr;
+                }
+                const year = date.getFullYear();
+                const month = String(date.getMonth() + 1).padStart(2, '0');
+                const day = String(date.getDate()).padStart(2, '0');
+                let hours = date.getHours();
+                const minutes = String(date.getMinutes()).padStart(2, '0');
+                const ampm = hours >= 12 ? 'PM' : 'AM';
+                hours = hours % 12;
+                hours = hours ? hours : 12; // 0 debería ser 12
+                hours = String(hours).padStart(2, '0');
+                return `${year}/${month}/${day} ${hours}:${minutes}${ampm}`;
+            } catch (e) {
+                return timeStr;
+            }
+        }
+
         function buildPonLogFull(host, ponLog) {
             if (!host || !ponLog) return null;
             return host + '/' + ponLog;
@@ -295,9 +331,11 @@
                                 const coords = extractLatLon(data.cliente.ubicacion);
                                 if (coords) {
                                     const dniLine = ev.DNI ? `<br>DNI: ${ev.DNI}` : '';
+                                    const timeLine = ev.TIME ? `<br>${formatEventTime(ev.TIME)}` : '';
                                     const popup = `<strong>${data.cliente.cliente || 'Cliente'}</strong><br>` +
                                                   `${data.cliente.pon_log || ''}<br>` +
                                                   `${ev.TIPO || ''} - ${ev.STATUS || ''}` +
+                                                  timeLine +
                                                   dniLine;
                                     addOrUpdateMarker(key, coords.lat, coords.lon, popup, host, firstLoadCompleted);
                                     // Solo agregar a desiredKeys DESPUÉS de agregar el marcador exitosamente
