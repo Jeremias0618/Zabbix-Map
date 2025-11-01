@@ -2,38 +2,30 @@
 // Endpoint para obtener datos de eventos Zabbix sin bloquear otras páginas
 // También funciona como cron job para recolectar estadísticas cada 3 segundos
 
-// Incluir configuración principal
 $config = require_once(__DIR__ . "/../include/config.php");
 
-// Configurar zona horaria desde configuración
 date_default_timezone_set($config['app']['timezone']);
 
-// Detectar si es llamada desde cron o desde web
 $isCronJob = (php_sapi_name() === 'cli' || !isset($_SERVER['HTTP_HOST']));
 
-// Si no es cron job, cerrar sesión para evitar bloqueos
 if (!$isCronJob) {
     session_write_close();
     
-    // Headers para evitar cache
     header('Cache-Control: no-cache, no-store, must-revalidate');
     header('Pragma: no-cache');
     header('Expires: 0');
     header('Content-Type: application/json; charset=utf-8');
 }
 
-// Configurar límites de tiempo y memoria desde configuración
 ini_set('max_execution_time', $config['app']['max_execution_time']);
 ini_set('memory_limit', $config['app']['memory_limit']);
 set_time_limit($config['app']['max_execution_time']);
 
-// Incluir clases
 require_once(__DIR__ . "/../include/ZabbixApi.php");
 
 use IntelliTrend\Zabbix\ZabbixApi;
 use IntelliTrend\Zabbix\ZabbixApiException;
 
-// Función para obtener datos de clientes (dashboard_client.php)
 function getClientData($config) {
     $zabConfig = $config['zabbix'];
     
@@ -45,7 +37,6 @@ function getClientData($config) {
         $zbx = new ZabbixApi();
         $zbx->loginToken($zabUrl, $zabToken);
 
-        // 1) Obtener ID del grupo "OLT"
         $groups = $zbx->call('hostgroup.get', [
             'filter' => ['name' => [$groupName]],
             'output' => ['groupid']
@@ -55,7 +46,6 @@ function getClientData($config) {
         }
         $groupid = $groups[0]['groupid'];
 
-        // 2) Obtener hosts del grupo
         $hosts = $zbx->call('host.get', [
             'output'   => ['hostid','host','name'],
             'groupids' => [$groupid]
@@ -69,16 +59,13 @@ function getClientData($config) {
             $hostMap[$h['hostid']] = $h['host'];
         }
 
-        // 3) Obtener filtros de tags para clientes
         $tagFilters = [
-            // Filtros para equipos alarmados
             [
                 ['tag' => 'OLT', 'value' => 'HUAWEI'],
                 ['tag' => 'ONU', 'value' => 'DESCONEXIÓN'],
                 ['tag' => 'ONU', 'value' => 'EQUIPO ALARMADO'],
                 ['tag' => 'ONU', 'value' => 'ESTADO']
             ],
-            // Filtros para problemas de potencia
             [
                 ['tag' => 'OLT', 'value' => 'HUAWEI'],
                 ['tag' => 'ONU', 'value' => 'POTENCIA TX'],
@@ -87,7 +74,6 @@ function getClientData($config) {
             ]
         ];
 
-        // 4) Recoger problemas activos y resueltos con múltiples filtros de tags
         $allProblems = [];
         
         foreach ($hostMap as $hid => $hostName) {
@@ -112,7 +98,6 @@ function getClientData($config) {
             return [];
         }
 
-        // 5) Eliminar duplicados basado en eventid
         $uniqueProblems = [];
         $seenEventIds = [];
         foreach ($allProblems as $p) {
@@ -122,34 +107,28 @@ function getClientData($config) {
             }
         }
 
-        // 6) Ordenar por 'clock' descendente (más recientes primero)
         usort($uniqueProblems, fn($a, $b) => $b['clock'] <=> $a['clock']);
 
-        // 7) Transformar a formato solicitado
         $jsonProblems = [];
         foreach ($uniqueProblems as $p) {
             $hid = $p['hostid'];
             $hostName = $hostMap[$hid];
             
-            // Extraer PON/LOG
             $ponLogInfo = null;
             if (preg_match('/\((\d+\/\d+\/\d+)\)/', $p['name'], $matches)) {
                 $ponLogInfo = $matches[1];
             }
             
-            // Extraer DNI
             $dniInfo = null;
             if (preg_match('/DNI\s+\(([^)]+)\)/', $p['name'], $matches)) {
                 $dniInfo = $matches[1];
             }
             
-            // Limpiar descripción
             $description = $p['name'];
             if (preg_match('/PROBLEMAS DE POTENCIA\s+(\d+)\s+([\d.]+)\s*km/', $p['name'], $matches)) {
                 $description = 'DNI: ' . $matches[1] . ' - Distancia: ' . $matches[2] . ' km';
             }
             
-            // Determinar tipo de problema
             $problemType = 'OTRO';
             if (strpos($p['name'], 'EQUIPO ALARMADO') !== false) {
                 $problemType = 'EQUIPO ALARMADO';
@@ -157,7 +136,6 @@ function getClientData($config) {
                 $problemType = 'PROBLEMAS DE POTENCIA';
             }
             
-            // Calcular TIME con zona horaria de Perú
             $timeAdjusted = $p['clock'];
             
             $jsonProblems[] = [
@@ -179,7 +157,6 @@ function getClientData($config) {
     }
 }
 
-// Función para obtener datos de threads (dashboard_thread.php)
 function getThreadData($config) {
     $zabConfig = $config['zabbix'];
     
@@ -187,7 +164,6 @@ function getThreadData($config) {
     $zabToken = $zabConfig['token'];
     $groupName = 'OLT';
     
-    // Tag filter para caída de hilo
     $tagFilter = [
         'tag' => 'PON',
         'value' => 'CAIDA DE HILO'
@@ -197,7 +173,6 @@ function getThreadData($config) {
         $zbx = new ZabbixApi();
         $zbx->loginToken($zabUrl, $zabToken);
 
-        // 1) Obtener ID del grupo "OLT"
         $groups = $zbx->call('hostgroup.get', [
             'filter' => ['name' => [$groupName]],
             'output' => ['groupid']
@@ -207,7 +182,6 @@ function getThreadData($config) {
         }
         $groupid = $groups[0]['groupid'];
 
-        // 2) Obtener hosts del grupo
         $hosts = $zbx->call('host.get', [
             'output'   => ['hostid','host','name'],
             'groupids' => [$groupid]
@@ -221,7 +195,6 @@ function getThreadData($config) {
             $hostMap[$h['hostid']] = $h['host'];
         }
 
-        // 3) Recoger problemas activos y resueltos
         $allProblems = [];
         foreach ($hostMap as $hid => $hostName) {
             $probs = $zbx->call('problem.get', [
@@ -242,22 +215,18 @@ function getThreadData($config) {
             return [];
         }
 
-        // 4) Ordenar por 'clock' descendente (más recientes primero)
         usort($allProblems, fn($a, $b) => $b['clock'] <=> $a['clock']);
 
-        // 5) Transformar a formato solicitado
         $jsonProblems = [];
         foreach ($allProblems as $p) {
             $hid = $p['hostid'];
             $hostName = $hostMap[$hid];
             
-            // Extraer GPON
             $gponInfo = null;
             if (preg_match('/GPON\s+(\d+)\/(\d+)\/(\d+)/', $p['name'], $matches)) {
                 $gponInfo = $matches[2] . '/' . $matches[3]; // Y/Z
             }
             
-            // Limpiar descripción
             $description = '';
             if (preg_match('/\(:([^)]+)\)/', $p['name'], $matches)) {
                 $description = $matches[1];
@@ -267,13 +236,11 @@ function getThreadData($config) {
                 $description = $desc;
             }
             
-            // Determinar tipo de problema
             $problemType = 'CAIDA DE HILO';
             if (strpos($p['name'], 'CAIDA DE HILO') === false) {
                 $problemType = 'OTRO';
             }
             
-            // Calcular TIME con zona horaria de Perú
             $timeAdjusted = $p['clock'];
             
             if ($gponInfo !== null) {
@@ -297,7 +264,6 @@ function getThreadData($config) {
     }
 }
 
-// Función principal para obtener todos los datos
 function getAllEventsData($config) {
     $clientData = getClientData($config);
     $threadData = getThreadData($config);
@@ -313,13 +279,11 @@ function getAllEventsData($config) {
     return $allEvents;
 }
 
-// Función para deduplicar eventos y contar únicos
 function deduplicateEvents($events) {
     $uniqueEvents = [];
     $eventMap = [];
     
     foreach ($events as $event) {
-        // Crear clave única basada en HOST + PON/LOG/GPON + DNI + TIPO
         $ponLog = isset($event['PON/LOG']) ? $event['PON/LOG'] : $event['GPON'];
         $eventKey = $event['HOST'] . '|' . $ponLog . '|' . $event['DNI'] . '|' . $event['TIPO'];
         

@@ -1,5 +1,13 @@
 # Zabbix Map
 
+[![Repositorio](https://img.shields.io/badge/GitHub-Zabbix--Map-181717?logo=github)](https://github.com/Jeremias0618/Zabbix-Map)
+![Visitas](https://visitor-badge.laobi.icu/badge?page_id=Jeremias0618.Zabbix-Map)
+![Zabbix](https://img.shields.io/badge/Zabbix-API%20Integration-DC382D?logo=zabbix&logoColor=white)
+![PHP](https://img.shields.io/badge/PHP-7.4%2B-777BB4?logo=php&logoColor=white)
+![PostgreSQL](https://img.shields.io/badge/PostgreSQL-12%2B-336791?logo=postgresql&logoColor=white)
+![Leaflet](https://img.shields.io/badge/Leaflet-1.9.4-199900?logo=leaflet&logoColor=white)
+![Ubuntu](https://img.shields.io/badge/Ubuntu%20Server-22.04%20LTS-E95420?logo=ubuntu&logoColor=white)
+
 ## Descripción del Proyecto
 
 **Zabbix Map** es una aplicación web que integra la API de Zabbix con una base de datos PostgreSQL para obtener alertas en tiempo real de clientes y visualizarlas en un mapa interactivo. El sistema permite monitorear eventos de infraestructura de red, equipos alarmados, problemas de potencia y caídas de hilo en tiempo real.

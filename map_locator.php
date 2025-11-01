@@ -12,6 +12,11 @@
         #map { height: 100vh; width: 100vw; }
         .mdi-marker.leaflet-div-icon, .svg-marker.leaflet-div-icon { background: transparent; border: none; }
         .mdi-marker, .svg-marker { line-height: 0; }
+        .svg-marker.svg-marker-blink { animation: markerBlink 1.2s ease-in-out infinite; }
+        @keyframes markerBlink {
+            0%, 100% { opacity: 1; filter: drop-shadow(0 0 0 rgba(255,255,255,0.4)); }
+            50% { opacity: 0.35; filter: drop-shadow(0 0 10px rgba(255,255,255,0.85)); }
+        }
     </style>
 </head>
 <body>
@@ -59,6 +64,8 @@
         L.control.layers({ 'Claro': lightLayer, 'Intermedio': midLayer, 'Oscuro': darkLayer, 'Satélite': satelliteLayer }, {}, { position: 'topleft' }).addTo(map);
 
         const markersByKey = {}; // key -> { marker, host }
+        const missingCounts = {}; // key -> consecutive cycles missing
+        const MISSING_THRESHOLD = 3; // evitar parpadeo: quitar tras 3 ciclos sin aparecer
 
         const hostPalette = [
             '#e6194B', '#3cb44b', '#4363d8', '#f58231', '#911eb4', '#46f0f0',
@@ -84,7 +91,7 @@
             'CAMP2-11': '#6D4C41',  // Marrón
             'PTP-12': '#00ACC1',    // Celeste turquesa
             'ANC-13': '#7CB342',    // Verde lima (único en la lista)
-            'CHO-14': '#FDD835',    // Amarillo brillante
+            'CHO-14': '#FF6F61',    // Amarillo brillante
             'LO-15': '#C2185B',     // Magenta
             'LO2-15': '#607D8B',    // Gris azulado
             'NEW_LO-15': '#303F9F', // Azul índigo puro
@@ -95,6 +102,8 @@
 
         const hostColorMap = {}; // HOST -> color
         let hostColorIndex = 0;
+        const BLINK_DURATION_MS = 2 * 60 * 1000; // 2 minutos
+        let firstLoadCompleted = false;
 
         function getColorForHost(host) {
             if (!hostColorMap[host]) {
@@ -108,13 +117,13 @@
             return hostColorMap[host];
         }
 
-        function createIconBySize(sizePx, colorHex) {
+        function createIconBySize(sizePx, colorHex, isBlinking) {
             const half = Math.round(sizePx / 2);
             const svg = '<svg width="' + sizePx + '" height="' + sizePx + '" viewBox="0 0 100 100" style="display:block">' +
                         '<circle cx="50" cy="50" r="50" fill="' + colorHex + '" />' +
                         '</svg>';
             return L.divIcon({
-                className: 'svg-marker',
+                className: 'svg-marker' + (isBlinking ? ' svg-marker-blink' : ''),
                 html: svg,
                 iconSize: [sizePx, sizePx],
                 iconAnchor: [half, half],
@@ -122,20 +131,26 @@
             });
         }
 
-        function getIconForZoom(zoom, colorHex) {
+        function getIconForZoom(zoom, colorHex, isBlinking) {
             const size = Math.max(6, Math.min(20, Math.round(zoom * 1.2)));
-            return createIconBySize(size, colorHex);
+            return createIconBySize(size, colorHex, !!isBlinking);
         }
 
-        function addOrUpdateMarker(key, lat, lon, popupHtml, host) {
+        function addOrUpdateMarker(key, lat, lon, popupHtml, host, shouldBlink = false) {
             const color = getColorForHost(host);
             if (markersByKey[key]) {
                 if (popupHtml) markersByKey[key].marker.bindPopup(popupHtml);
                 return;
             }
-            const marker = L.marker([lat, lon], { icon: getIconForZoom(map.getZoom(), color) }).addTo(map);
+            const isBlinking = !!shouldBlink;
+            const marker = L.marker([lat, lon], { icon: getIconForZoom(map.getZoom(), color, isBlinking) }).addTo(map);
             if (popupHtml) marker.bindPopup(popupHtml);
-            markersByKey[key] = { marker, host };
+            markersByKey[key] = {
+                marker,
+                host,
+                blinkUntil: isBlinking ? Date.now() + BLINK_DURATION_MS : null,
+                isBlinking: isBlinking
+            };
         }
 
         function removeMarker(key) {
@@ -148,11 +163,31 @@
 
         map.on('zoomend', () => {
             const z = map.getZoom();
+            const now = Date.now();
             Object.values(markersByKey).forEach(obj => {
                 const color = getColorForHost(obj.host);
-                obj.marker.setIcon(getIconForZoom(z, color));
+                const shouldBlink = obj.blinkUntil && now < obj.blinkUntil;
+                if (obj.isBlinking !== shouldBlink) {
+                    obj.isBlinking = shouldBlink;
+                }
+                obj.marker.setIcon(getIconForZoom(z, color, obj.isBlinking));
             });
         });
+
+        function refreshBlinkStates() {
+            const now = Date.now();
+            Object.values(markersByKey).forEach(obj => {
+                const shouldBlink = obj.blinkUntil && now < obj.blinkUntil;
+                if (obj.isBlinking !== shouldBlink) {
+                    obj.isBlinking = shouldBlink;
+                    if (!shouldBlink) {
+                        obj.blinkUntil = null;
+                    }
+                    const color = getColorForHost(obj.host);
+                    obj.marker.setIcon(getIconForZoom(map.getZoom(), color, shouldBlink));
+                }
+            });
+        }
 
         function extractLatLon(url) {
             if (!url) return null;
@@ -231,6 +266,7 @@
                 console.log('[MAP] PROBLEM events:', problemEvents.length);
 
                 const desiredKeys = new Set();
+                const processedKeys = new Set(); // Para evitar duplicados en el mismo ciclo
 
                 for (const ev of problemEvents) {
                     const host = ev.HOST;
@@ -246,31 +282,44 @@
                         const full = buildPonLogFull(host, pon);
                         if (!full) continue;
                         const key = full; // HOST/SLOT/PORT/LOG
-                        if (desiredKeys.has(key)) continue; // evitar duplicados en este ciclo
-                        desiredKeys.add(key);
-                        const data = await fetchJson('api/get_cliente_data.php', {
-                            method: 'POST',
-                            headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify({ pon_log: full })
-                        });
-                        if (data.success && data.cliente && data.cliente.ubicacion) {
-                            const coords = extractLatLon(data.cliente.ubicacion);
-                            if (coords) {
-                                const dniLine = ev.DNI ? `<br>DNI: ${ev.DNI}` : '';
-                                const popup = `<strong>${data.cliente.cliente || 'Cliente'}</strong><br>` +
-                                              `${data.cliente.pon_log || ''}<br>` +
-                                              `${ev.TIPO || ''} - ${ev.STATUS || ''}` +
-                                              dniLine;
-                                addOrUpdateMarker(key, coords.lat, coords.lon, popup, host);
+                        if (processedKeys.has(key)) continue; // evitar procesar duplicados en este ciclo
+                        processedKeys.add(key);
+                        
+                        try {
+                            const data = await fetchJson('api/get_cliente_data.php', {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({ pon_log: full })
+                            });
+                            if (data.success && data.cliente && data.cliente.ubicacion) {
+                                const coords = extractLatLon(data.cliente.ubicacion);
+                                if (coords) {
+                                    const dniLine = ev.DNI ? `<br>DNI: ${ev.DNI}` : '';
+                                    const popup = `<strong>${data.cliente.cliente || 'Cliente'}</strong><br>` +
+                                                  `${data.cliente.pon_log || ''}<br>` +
+                                                  `${ev.TIPO || ''} - ${ev.STATUS || ''}` +
+                                                  dniLine;
+                                    addOrUpdateMarker(key, coords.lat, coords.lon, popup, host, firstLoadCompleted);
+                                    // Solo agregar a desiredKeys DESPUÉS de agregar el marcador exitosamente
+                                    desiredKeys.add(key);
+                                }
                             }
+                        } catch (err) {
+                            console.error('[MAP] Error procesando evento', key, err);
+                            // No agregar a desiredKeys si falla
                         }
-                    } else {
                     }
                 }
 
                 Object.keys(markersByKey).forEach((key) => {
                     if (!desiredKeys.has(key)) {
-                        removeMarker(key);
+                        missingCounts[key] = (missingCounts[key] || 0) + 1;
+                        if (missingCounts[key] >= MISSING_THRESHOLD) {
+                            delete missingCounts[key];
+                            removeMarker(key);
+                        }
+                    } else {
+                        missingCounts[key] = 0;
                     }
                 });
 
@@ -299,8 +348,13 @@
                     }).join('');
                     hostListEl.innerHTML = html || '<span style="opacity:.7">Sin datos</span>';
                 }
+
+                refreshBlinkStates();
             } catch (e) {
                 console.error('[MAP] Error loadAndRender:', e);
+            }
+            if (!firstLoadCompleted) {
+                firstLoadCompleted = true;
             }
         }
 
