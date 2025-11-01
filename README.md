@@ -8,19 +8,68 @@
 ![Leaflet](https://img.shields.io/badge/Leaflet-1.9.4-199900?logo=leaflet&logoColor=white)
 ![Ubuntu](https://img.shields.io/badge/Ubuntu%20Server-22.04%20LTS-E95420?logo=ubuntu&logoColor=white)
 
+## Tabla de Contenidos
+
+- [Descripción del Proyecto](#descripción-del-proyecto)
+- [Características Principales](#características-principales)
+- [Arquitectura del Sistema](#arquitectura-del-sistema)
+- [Flujo de Funcionamiento](#flujo-de-funcionamiento)
+- [Tecnologías Utilizadas](#tecnologías-utilizadas)
+- [Instalación](#instalación)
+- [Configuración](#configuración)
+- [Uso](#uso)
+- [Endpoints de la API](#endpoints-de-la-api)
+- [Operación y Mantenimiento](#operación-y-mantenimiento)
+- [Resolución de Problemas](#resolución-de-problemas)
+- [Hoja de Ruta](#hoja-de-ruta)
+
 ## Descripción del Proyecto
 
 **Zabbix Map** es una aplicación web que integra la API de Zabbix con una base de datos PostgreSQL para obtener alertas en tiempo real de clientes y visualizarlas en un mapa interactivo. El sistema permite monitorear eventos de infraestructura de red, equipos alarmados, problemas de potencia y caídas de hilo en tiempo real.
 
 ## Características Principales
 
-- 🔄 **Monitoreo en Tiempo Real**: Actualización automática cada 4 segundos
+- 🔄 **Monitoreo en Tiempo Real**: Intervalo de refresco configurable
 - 🗺️ **Visualización en Mapa**: Ubicación geográfica de eventos y alertas
 - 📊 **Dashboard Interactivo**: Interfaz moderna con filtros avanzados
 - 🔍 **Filtros Avanzados**: Por OLT, PON/LOG, DNI, ODF, HILO, tipo, estado y fecha
 - 📈 **Estadísticas Históricas**: Almacenamiento de datos para análisis
 - 🎨 **UI Moderna**: Interfaz cyberpunk con efectos glassmorphism
 - 📱 **Responsive**: Compatible con dispositivos móviles y desktop
+
+## Arquitectura del Sistema
+
+- **Frontend (Leaflet + JavaScript)**: Renderiza el mapa, gestiona la visualización de marcadores y consume los endpoints REST.
+- **Backend PHP**: Expone los endpoints en `api/`, procesa respuestas de Zabbix y realiza consultas a PostgreSQL.
+- **Base de Datos PostgreSQL**: Persiste datos de configuración y cachea información operativa.
+- **Integración con Zabbix**: Usa JSON-RPC para extraer eventos en tiempo real.
+- **Servicios auxiliares**: Scripts en `deploy/` para aprovisionar Ubuntu Server 22.04 con Apache, PHP y PostgreSQL.
+
+```
+┌─────────────┐      JSON-RPC      ┌─────────────┐
+│  Zabbix API │◀──────────────────▶│ PHP Backend │
+└─────────────┘                    └──────┬──────┘
+                                          │REST JSON
+                                          ▼
+                                   ┌─────────────┐
+                                   │  Frontend   │
+                                   │ (Leaflet)   │
+                                   └──────┬──────┘
+                                          │SQL
+                                          ▼
+                                   ┌─────────────┐
+                                   │ PostgreSQL  │
+                                   └─────────────┘
+```
+
+## Flujo de Funcionamiento
+
+1. El frontend solicita `api/get_events_data.php`.
+2. El backend consulta Zabbix, normaliza los eventos y cruza información adicional desde PostgreSQL.
+3. La respuesta JSON se filtra en el navegador para identificar eventos en estado `PROBLEM`.
+4. Para eventos con `HOST/PON` específicos se consulta `api/get_cliente_data.php` buscando la URL de ubicación.
+5. Si la URL contiene coordenadas válidas, el marcador se dibuja en Leaflet y, si es un evento nuevo, parpadea durante 2 minutos.
+6. Cuando un evento deja de aparecer por 3 iteraciones consecutivas, su marcador se elimina del mapa.
 
 ## Tecnologías Utilizadas
 
@@ -110,7 +159,7 @@ Notas:
 ### Panel de Eventos
 
 1. Acceder a `events_zabbix.php`
-2. Los eventos se cargan automáticamente cada 4 segundos
+2. Los eventos se cargan automáticamente
 3. Utilizar los filtros para buscar eventos específicos
 4. Exportar datos a Excel si es necesario
 
@@ -126,7 +175,14 @@ Notas:
 - **Fecha**: Filtro por fecha específica
 - **Hora**: Filtro por hora o rango horario
 
-## API Endpoints
+### Configuración del Mapa (`map_locator.php`)
+
+- **Ciclos de refresco**: Ajustar el intervalo en `setInterval(loadAndRender, 4000)`.
+- **Colores por host**: Editar `predefinedHostColors` para asignar combinaciones fijas.
+- **Animación de alertas nuevas**: `BLINK_DURATION_MS` controla el tiempo de parpadeo (valor por defecto 2 minutos).
+- **Capas base**: Se usan los tiles de Carto y Esri; se pueden añadir o quitar en la sección de `tileLayer`.
+
+## Endpoints de la API
 
 ### GET /api/get_events_data.php
 
@@ -153,6 +209,50 @@ Obtiene todos los eventos de Zabbix en formato JSON.
   "thread_count": 30
 }
 ```
+
+### POST /api/get_cliente_data.php
+
+- **Body**: `{ "pon_log": "HOST/SLOT/PORT/LOG" }`
+- **Función**: Recupera datos del cliente y la URL de ubicación almacenada.
+- **Respuesta**:
+
+```json
+{
+  "success": true,
+  "cliente": {
+    "cliente": "Nombre del cliente",
+    "pon_log": "SD-1/1/3/15",
+    "ubicacion": "https://maps.google.com/..."
+  }
+}
+```
+
+### GET /api/get_clientes_by_prefix.php
+
+- **Parámetros**: `prefix` y/o `limit`.
+- **Función**: Autocompletado de clientes por coincidencia de PON/LOG.
+- **Uso típico**: Formularios de configuración o paneles administrativos.
+
+## Operación y Mantenimiento
+
+- **Monitoreo**: Revisar los logs de Apache (`/var/log/apache2/error.log`) y del sistema (`journalctl -u apache2`).
+- **Sincronización**: Programar tareas cron para limpieza o archivado de eventos antiguos si se habilitan registros históricos adicionales.
+- **Backups**: Respaldar periódicamente la base PostgreSQL (`pg_dump`) y los archivos de configuración en `include/`.
+- **Actualizaciones**: Validar compatibilidad con versiones nuevas de Zabbix antes de actualizar; verificar los cambios en el esquema de la API.
+
+## Resolución de Problemas
+
+- **Markers que no aparecen**: Verificar que la URL tenga coordenadas válidas y que `extractLatLon` soporte el formato recibido.
+- **Eventos duplicados**: El backend marca cada evento por `HOST/PON/LOG`; asegurarse de que los datos fuente no incluyan claves repetidas.
+- **Consumo alto de API**: Ajustar el intervalo de `setInterval` o activar caching en servidor.
+- **Errores de CORS**: Confirmar que el frontend y el backend compartan el mismo dominio o que Apache esté configurado con cabeceras `Access-Control-Allow-Origin` apropiadas.
+
+## Hoja de Ruta
+
+- Añadir vista histórica con timeline de eventos resueltos.
+- Exponer métricas Prometheus para el backend.
+- Incorporar soporte para múltiples sistemas de mapas (Mapbox, Google Maps).
+- Implementar tests automáticos de integración para los endpoints.
 
 ## Desarrollo
 
