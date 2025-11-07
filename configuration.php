@@ -163,13 +163,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['save_config'])) {
         }
         
         try {
-            $dsn = "pgsql:host={$dbIp};port={$dbPort};dbname={$dbName};charset=utf8";
+            $dsn = "pgsql:host={$dbIp};port={$dbPort};dbname={$dbName}";
             $pdo = new PDO($dsn, $dbUser, $dbPass, [
                 PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
                 PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
                 PDO::ATTR_EMULATE_PREPARES => false,
             ]);
-            
+
+            $dbCharset = $newConfig['database']['charset'] ?? '';
+            if (!empty($dbCharset) && preg_match('/^[a-zA-Z0-9_\\-]+$/', $dbCharset)) {
+                $pdo->exec("SET NAMES '" . strtoupper($dbCharset) . "'");
+            }
+
             $message .= " PostgreSQL conectada correctamente.";
         } catch (Exception $e) {
             $message .= " Error al conectar con PostgreSQL: " . $e->getMessage();
