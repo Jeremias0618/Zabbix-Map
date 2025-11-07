@@ -214,8 +214,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['save_config'])) {
                 ]
             ],
             'app' => [
-                'name' => 'Zabbix Map',
-                'version' => '1.0.0',
+                'name' => $currentConfig['app']['name'] ?? 'Zabbix Map',
+                'version' => $version,
                 'timezone' => 'America/Lima',
                 'debug' => false,
                 'maintenance_mode' => false,
