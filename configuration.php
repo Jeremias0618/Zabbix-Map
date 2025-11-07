@@ -10,6 +10,9 @@
 
 session_start();
 
+$CONFIG_PAGE_USER = 'yeremi';
+$CONFIG_PAGE_PASS = 'JeremiasNoc';
+
 $config = require_once 'include/config.php';
 
 $version = trim(file_get_contents('VERSION'));
@@ -25,6 +28,127 @@ $currentConfig = file_exists($configFile) ? require($configFile) : [];
 
 $message = '';
 $messageType = '';
+
+if (isset($_GET['logout'])) {
+    unset($_SESSION['configuration_authenticated']);
+    session_regenerate_id(true);
+    header('Location: configuration.php');
+    exit;
+}
+
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['login_config'])) {
+    $username = trim($_POST['username'] ?? '');
+    $password = $_POST['password'] ?? '';
+
+    if (hash_equals($CONFIG_PAGE_USER, $username) && hash_equals($CONFIG_PAGE_PASS, $password)) {
+        $_SESSION['configuration_authenticated'] = true;
+        session_regenerate_id(true);
+        header('Location: configuration.php');
+        exit;
+    } else {
+        $message = 'Usuario o contraseña inválidos';
+        $messageType = 'error';
+    }
+}
+
+if (empty($_SESSION['configuration_authenticated'])) {
+    ?>
+    <!DOCTYPE html>
+    <html lang="es">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Acceso Restringido - <?= htmlspecialchars($config['app']['name']) ?></title>
+        <script src="https://cdn.tailwindcss.com"></script>
+        <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@mdi/font@7.4.47/css/materialdesignicons.min.css">
+        <style>
+            .glass-card {
+                background: rgba(15, 23, 42, 0.85);
+                backdrop-filter: blur(18px);
+                border: 1px solid rgba(148, 163, 184, 0.12);
+                box-shadow: 0 20px 45px -12px rgba(0, 0, 0, 0.45);
+            }
+
+            .btn-primary {
+                background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+                transition: all 0.3s ease;
+            }
+
+            .btn-primary:hover {
+                transform: translateY(-1px);
+                box-shadow: 0 12px 30px rgba(59, 130, 246, 0.35);
+            }
+
+            .btn-secondary {
+                background: linear-gradient(135deg, #64748b 0%, #475569 100%);
+                transition: all 0.3s ease;
+            }
+
+            .btn-secondary:hover {
+                transform: translateY(-1px);
+                box-shadow: 0 12px 30px rgba(100, 116, 139, 0.3);
+            }
+        </style>
+    </head>
+    <body class="min-h-screen bg-[#0a0e17] bg-gradient-to-br from-gray-950 via-slate-900 to-gray-950 text-white flex items-center justify-center px-4">
+        <div class="w-full max-w-md">
+            <div class="glass-card p-8 rounded-2xl shadow-xl">
+                <div class="text-center mb-6">
+                    <div class="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-br from-blue-500 to-purple-600 rounded-2xl mb-4">
+                        <span class="mdi mdi-lock text-3xl text-white"></span>
+                    </div>
+                    <h1 class="text-2xl font-bold text-white">Acceso a Configuración</h1>
+                    <p class="text-gray-400 text-sm mt-2">Ingrese sus credenciales para continuar.</p>
+                </div>
+
+                <?php if (!empty($message)): ?>
+                <div class="mb-4 p-3 rounded-lg <?= $messageType === 'error' ? 'bg-red-500/20 border border-red-500/30 text-red-300' : 'bg-green-500/20 border border-green-500/30 text-green-300' ?>">
+                    <div class="flex items-center">
+                        <span class="mdi mdi-<?= $messageType === 'error' ? 'close-circle' : 'check-circle' ?> mr-2"></span>
+                        <?= htmlspecialchars($message) ?>
+                    </div>
+                </div>
+                <?php endif; ?>
+
+                <form method="POST" class="space-y-6">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-300 mb-2">
+                            <span class="mdi mdi-account mr-1"></span>
+                            Usuario
+                        </label>
+                        <input type="text" name="username" required autofocus
+                               class="w-full px-4 py-3 rounded-lg bg-slate-900/80 border border-slate-700 text-white placeholder-gray-500 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/40">
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-medium text-gray-300 mb-2">
+                            <span class="mdi mdi-lock mr-1"></span>
+                            Contraseña
+                        </label>
+                        <input type="password" name="password" required
+                               class="w-full px-4 py-3 rounded-lg bg-slate-900/80 border border-slate-700 text-white placeholder-gray-500 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/40">
+                    </div>
+
+                    <div class="flex flex-col gap-3">
+                        <button type="submit" name="login_config"
+                                class="w-full btn-primary px-6 py-3 rounded-lg text-white font-semibold flex items-center justify-center gap-2">
+                            <span class="mdi mdi-login"></span>
+                            Iniciar Sesión
+                        </button>
+                        <a href="index.php"
+                           class="w-full btn-secondary px-6 py-3 rounded-lg text-white font-semibold flex items-center justify-center gap-2 text-center">
+                            <span class="mdi mdi-arrow-left"></span>
+                            Volver a Inicio
+                        </a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </body>
+    </html>
+    <?php
+    exit;
+}
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['save_config'])) {
     try {
