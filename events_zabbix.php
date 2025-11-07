@@ -824,41 +824,6 @@ $rol_actual = 'Supervisor';
     .group-color-9 { background-color: rgba(20, 184, 166, 0.1) !important; border-left: 4px solid #14b8a6 !important; }
     .group-color-10 { background-color: rgba(249, 115, 22, 0.1) !important; border-left: 4px solid #f97316 !important; }
 
-    /* Estilos para enlaces de DNI e INTF */
-    .dni-link-icon {
-        transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-        backdrop-filter: blur(4px);
-        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-    }
-
-    .dni-link-icon:hover {
-        background: rgba(59, 130, 246, 0.6) !important;
-        color: #ffffff !important;
-        transform: scale(1.15);
-        box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
-    }
-
-    .dni-link-icon:active {
-        transform: scale(0.95);
-    }
-
-    /* Estilo específico para enlaces de INTF (Thread Status) */
-    .intf-link-icon {
-        transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-        backdrop-filter: blur(4px);
-        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-    }
-
-    .intf-link-icon:hover {
-        background: rgba(147, 51, 234, 0.6) !important;
-        color: #ffffff !important;
-        transform: scale(1.15);
-        box-shadow: 0 4px 12px rgba(147, 51, 234, 0.3);
-    }
-
-    .intf-link-icon:active {
-        transform: scale(0.95);
-    }
   </style>
 </head>
 <body class="min-h-screen bg-[#0a0e17] bg-gradient-to-br from-gray-950 via-slate-900 to-gray-950 text-white font-sans flex overflow-x-hidden" x-data="{showUserMenu: false}">
@@ -1552,28 +1517,12 @@ $rol_actual = 'Supervisor';
 
             // Crear enlace para DNI si no es '-' o 'N/A'
             const dniContent = (dni !== '-' && dni !== 'N/A') ? 
-                `<div class="flex items-center justify-center gap-2">
-                    <span class="font-mono">${dni}</span>
-                    <a href="../noc/client_final.php?dni_ruc=${encodeURIComponent(dni)}&auto_search=1" 
-                       target="_blank" 
-                       class="dni-link-icon inline-flex items-center justify-center w-6 h-6 rounded-full bg-blue-500/20 hover:bg-blue-500/40 text-blue-400 hover:text-blue-300"
-                       title="Buscar cliente en NOC">
-                        <span class="mdi mdi-account-search text-sm"></span>
-                    </a>
-                </div>` : dni;
+                `<span class="font-mono">${dni}</span>` : dni;
 
             // Crear enlace para INTF (HOST/SLOT/PORT) si tiene datos válidos
             const ponLogEvento = event['PON/LOG'] || event.GPON || '';
             const intfContent = (event.HOST && ponLogEvento && ponLogEvento !== '-') ? 
-                `<div class="flex items-center justify-center gap-2">
-                    <span class="font-mono">${ponLogCombinado}</span>
-                    <a href="../noc/olt_status.php?olt=${encodeURIComponent(event.HOST)}&slot_port=${encodeURIComponent(ponLogEvento.split('/').slice(0, 2).join('/'))}&autoload=1&highlight_dni=${encodeURIComponent(dni)}" 
-                       target="_blank" 
-                       class="intf-link-icon inline-flex items-center justify-center w-6 h-6 rounded-full bg-purple-500/20 hover:bg-purple-500/40 text-purple-400 hover:text-purple-300"
-                       title="Ver Thread Status en OLT">
-                        <span class="mdi mdi-chart-box text-sm"></span>
-                    </a>
-                </div>` : ponLogCombinado;
+                `<span class="font-mono">${ponLogCombinado}</span>` : ponLogCombinado;
 
             html += `
                 <tr class="${groupColorClass}">
