@@ -64,21 +64,19 @@ function runCycle(array $config, \PDO $pdo, string $logFile): void
             continue;
         }
 
-        // Unificar formato host/slot/port/log
-        $normalizedPon = $ponLog;
-        if (str_starts_with($normalizedPon, $host . '/')) {
-            $normalizedPon = substr($normalizedPon, strlen($host) + 1);
+        $normalizedPon = normalizePonForKeyValue($host, $ponLog);
+        if ($normalizedPon === '') {
+            continue;
         }
 
         if (!isIndividualPon($normalizedPon) && !isIndividualPon($ponLog)) {
             continue;
         }
-
-        $normalizedPon = ltrim($normalizedPon, '/');
-        $fullPonLog = $host . '/' . $normalizedPon;
+        $fullPonLog = buildFullPonKey($host, $normalizedPon);
 
         $stateKey = buildStateKey($host, $normalizedPon);
-        $stateFp = $existingStates[$stateKey] ?? 'unplanned';
+        $fullStateKey = 'FULL::' . $fullPonLog;
+        $stateFp = $existingStates[$stateKey] ?? ($existingStates[$fullStateKey] ?? 'unplanned');
 
         $clientInfo = fetchClientInfo($pdo, $fullPonLog);
 
@@ -501,6 +499,21 @@ function writeLogFile(string $path, array $records): void
     file_put_contents($path, $json . PHP_EOL, LOCK_EX);
 }
 
+function normalizePonForKeyValue(string $host, string $ponLog): string
+{
+    $normalized = trim($ponLog);
+    if (str_starts_with($normalized, $host . '/')) {
+        $normalized = substr($normalized, strlen($host) + 1);
+    }
+    return ltrim($normalized, '/');
+}
+
+function buildFullPonKey(string $host, string $normalizedPon): string
+{
+    $normalized = ltrim($normalizedPon, '/');
+    return $host . '/' . $normalized;
+}
+
 function buildStateKey(string $host, string $normalizedPon): string
 {
     return $host . '::' . ltrim($normalizedPon, '/');
@@ -554,13 +567,12 @@ function loadExistingStates(string $logFile): array
             continue;
         }
 
-        $normalized = $ponFull;
-        if (str_starts_with($normalized, $host . '/')) {
-            $normalized = substr($normalized, strlen($host) + 1);
-        }
-        $normalized = ltrim($normalized, '/');
+        $normalized = normalizePonForKeyValue($host, $ponFull);
+        $full = buildFullPonKey($host, $normalized);
 
-        $states[buildStateKey($host, $normalized)] = $record['state_fp'] ?? 'unplanned';
+        $stateValue = $record['state_fp'] ?? 'unplanned';
+        $states[buildStateKey($host, $normalized)] = $stateValue;
+        $states['FULL::' . $full] = $stateValue;
     }
 
     return $states;

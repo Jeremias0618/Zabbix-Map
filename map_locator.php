@@ -148,7 +148,16 @@
 
             if (markersByKey[key]) {
                 if (popupHtml) {
-                    markersByKey[key].marker.setPopupContent(popupHtml);
+                    const existingPopup = markersByKey[key].marker.getPopup();
+                    if (existingPopup) {
+                        existingPopup.setContent(popupHtml);
+                    } else {
+                        markersByKey[key].marker.bindPopup(popupHtml);
+                    }
+                    if (markersByKey[key].marker.isPopupOpen()) {
+                        const popupEl = markersByKey[key].marker.getPopup().getElement();
+                        setupStateControls(popupEl, key);
+                    }
                 }
                 markersByKey[key].eventTimeMs = eventTimeMs;
                 markersByKey[key].isBlinking = shouldBlink;
