@@ -10,7 +10,7 @@ $response = [
     'records' => [],
 ];
 
-$allowedStates = ['planned', 'unplanned', 'without_message', 'no_visitors'];
+$allowedStates = ['planned', 'unplanned', 'without_message', 'no_visitors', 'its_not_a_problem', 'fieldwork'];
 
 if (!file_exists($logFile)) {
     echo json_encode($response, JSON_UNESCAPED_UNICODE);

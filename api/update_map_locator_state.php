@@ -8,6 +8,8 @@ $allowedStates = [
     'unplanned',
     'without_message',
     'no_visitors',
+    'its_not_a_problem',
+    'fieldwork',
 ];
 
 try {

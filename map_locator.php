@@ -68,7 +68,9 @@
             planned: 'Visita Programada',
             unplanned: 'No Programado',
             without_message: 'Sin respuesta',
-            no_visitors: 'No desea visita'
+            no_visitors: 'No desea visita',
+            its_not_a_problem: 'No tiene problemas',
+            fieldwork: 'Trabajos en campo'
         };
         const missingCounts = {}; // key -> consecutive cycles missing
         const MISSING_THRESHOLD = 3; // evitar parpadeo: quitar tras 3 ciclos sin aparecer
@@ -142,7 +144,7 @@
             return createIconBySize(size, colorHex, !!isBlinking);
         }
 
-        function addOrUpdateMarker(key, lat, lon, popupHtml, host, eventTimeMs = null, stateFp = 'unplanned', fullPonLog = '') {
+        function addOrUpdateMarker(key, lat, lon, popupHtml, host, eventTimeMs = null, stateFp = 'unplanned', fullPonLog = '', dniValue = '') {
             const color = getColorForHost(host);
             const shouldBlink = eventTimeMs !== null && (Date.now() - eventTimeMs) <= BLINK_DURATION_MS;
 
@@ -157,6 +159,7 @@
                     if (markersByKey[key].marker.isPopupOpen()) {
                         const popupEl = markersByKey[key].marker.getPopup().getElement();
                         setupStateControls(popupEl, key);
+                        setupDniCopy(popupEl);
                     }
                 }
                 markersByKey[key].eventTimeMs = eventTimeMs;
@@ -164,6 +167,7 @@
                 markersByKey[key].host = host;
                 markersByKey[key].stateFp = stateFp;
                 markersByKey[key].fullPonLog = fullPonLog;
+                markersByKey[key].dni = dniValue;
                 markersByKey[key].marker.setIcon(getIconForZoom(map.getZoom(), color, shouldBlink));
                 return;
             }
@@ -171,6 +175,7 @@
             if (popupHtml) marker.bindPopup(popupHtml);
             marker.on('popupopen', (event) => {
                 setupStateControls(event.popup.getElement(), key);
+                setupDniCopy(event.popup.getElement());
             });
             markersByKey[key] = {
                 marker,
@@ -178,7 +183,8 @@
                 eventTimeMs,
                 isBlinking: shouldBlink,
                 stateFp,
-                fullPonLog
+                fullPonLog,
+                dni: dniValue
             };
         }
 
@@ -425,6 +431,42 @@
             });
         }
 
+        function setupDniCopy(popupEl) {
+            if (!popupEl) return;
+            const copyBtn = popupEl.querySelector('.dni-copy-btn');
+            if (!copyBtn) return;
+            if (copyBtn.dataset.listenerAttached === 'true') return;
+            copyBtn.dataset.listenerAttached = 'true';
+
+            copyBtn.addEventListener('click', async (event) => {
+                event.preventDefault();
+                event.stopPropagation();
+
+                const dni = copyBtn.dataset.dni || '';
+                if (!dni) return;
+                try {
+                    if (navigator.clipboard && window.isSecureContext) {
+                        await navigator.clipboard.writeText(dni);
+                    } else {
+                        const textarea = document.createElement('textarea');
+                        textarea.value = dni;
+                        textarea.style.position = 'fixed';
+                        textarea.style.opacity = '0';
+                        document.body.appendChild(textarea);
+                        textarea.focus();
+                        textarea.select();
+                        document.execCommand('copy');
+                        document.body.removeChild(textarea);
+                    }
+                    copyBtn.classList.add('copied');
+                    setTimeout(() => copyBtn.classList.remove('copied'), 1200);
+                } catch (error) {
+                    console.error('[MAP] Error copiando DNI:', error);
+                    alert('No se pudo copiar el DNI');
+                }
+            });
+        }
+
         async function loadAndRender() {
             try {
                 const logResp = await fetchJson(`api/get_map_locator_data.php?ts=${Date.now()}`);
@@ -529,14 +571,24 @@
                         popupParts.push(formatEventTime(timestamp));
                     }
 
+                    let dniSection = '';
                     if (dni) {
-                        popupParts.push(`DNI: ${dni}`);
+                        dniSection = `
+                            <div class="flex items-center justify-center gap-2">
+                                <span>DNI: ${dni}</span>
+                                <button type="button" class="dni-copy-btn inline-flex items-center justify-center w-6 h-6 rounded-full bg-slate-800 text-gray-200 hover:bg-slate-600 transition"
+                                    title="Copiar DNI" data-dni="${dni}" data-key="${key}">
+                                    <span class="mdi mdi-content-copy text-xs"></span>
+                                </button>
+                            </div>
+                        `;
                     }
 
                     const baseInfoHtml = popupParts.map(part => `<div>${part}</div>`).join('');
                     const popupHtml = `
                         <div class="space-y-2 text-sm text-gray-200 text-center">
                             ${baseInfoHtml}
+                            ${dniSection}
                             <div><strong>Estado:</strong> <span class="state-label" data-state-key="${key}">${stateToLabel(stateFp)}</span></div>
                             <div class="flex flex-col gap-1 items-center">
                                 <label class="text-xs text-gray-400">Actualizar estado</label>
@@ -549,7 +601,7 @@
 
                     desiredKeys.add(key);
 
-                    addOrUpdateMarker(key, coords.lat, coords.lon, popupHtml, host, eventTimeMs, stateFp, fullPonLog);
+                    addOrUpdateMarker(key, coords.lat, coords.lon, popupHtml, host, eventTimeMs, stateFp, fullPonLog, dni);
 
                     const markerItem = markersByKey[key];
                     if (markerItem) {
@@ -558,6 +610,7 @@
                         markerItem.eventTimeMs = eventTimeMs;
                         markerItem.stateFp = stateFp;
                         markerItem.fullPonLog = fullPonLog;
+                        markerItem.dni = dni;
                     }
                 }
 
