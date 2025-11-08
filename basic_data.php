@@ -1,14 +1,10 @@
 <?php
-// Cargar configuración principal
 $config = require_once 'include/config.php';
 
-// Leer versión del sistema desde archivo VERSION
 $version = trim(file_get_contents('VERSION'));
 
-// Configurar zona horaria
 date_default_timezone_set($config['app']['timezone']);
 
-// Variables para el menú de usuario (simuladas por ahora)
 $usuario_actual = 'Administrador';
 $rol_actual = 'Supervisor';
 ?>
@@ -82,7 +78,6 @@ $rol_actual = 'Supervisor';
   </script>
 
   <style>
-    /* Configuración general */
     body {
         min-height: 100vh;
         background-color: #0B1120;
@@ -92,7 +87,6 @@ $rol_actual = 'Supervisor';
         position: relative;
     }
     
-    /* Efectos de cristal */
     .glass {
         background: rgba(13, 19, 33, 0.65);
         backdrop-filter: blur(12px) saturate(180%);
@@ -146,7 +140,6 @@ $rol_actual = 'Supervisor';
         left: 100%;
     }
     
-    /* Efectos de iconos */
     .icon-glow {
         filter: drop-shadow(0 0 5px var(--glow-color));
         transition: all 0.3s ease;
@@ -180,7 +173,6 @@ $rol_actual = 'Supervisor';
     .icon-glow-lime { --glow-color: #a3e635; }
     
     
-    /* Línea cyber */
     .cyber-line {
         height: 1px;
         background: linear-gradient(
@@ -194,7 +186,6 @@ $rol_actual = 'Supervisor';
         overflow: hidden;
     }
     
-    /* Animaciones */
     .fade-in-up {
         animation: fadeInUp 0.8s cubic-bezier(0.25, 0.46, 0.45, 0.94) both;
         animation-fill-mode: both;
@@ -219,13 +210,11 @@ $rol_actual = 'Supervisor';
         }
     }
     
-    /* Animaciones del logo Digital Matrix */
     @keyframes blink {
         0%, 70% { opacity: 1; }
         71%, 100% { opacity: 0.3; }
     }
     
-    /* Estilo de texto animado para FiberOps */
     .gradient-text-full {
         background: linear-gradient(90deg, #00ff88, #00d4ff, #7c3aed);
         background-size: 200% 100%;
@@ -240,7 +229,6 @@ $rol_actual = 'Supervisor';
         100% { background-position: -200% 0; }
     }
     
-    /* Grid de partículas de fondo */
     .particle-background {
       position: fixed;
       width: 100%;
@@ -261,7 +249,6 @@ $rol_actual = 'Supervisor';
       100% { background-position: 1000px 1000px, 1020px 1020px; }
     }
     
-    /* Efecto resplandor en los bordes */
     .glow-border {
       position: relative;
     }
@@ -287,7 +274,6 @@ $rol_actual = 'Supervisor';
     
     
     
-    /* Scrollbar personalizado */
     .custom-scrollbar::-webkit-scrollbar {
         width: 6px;
     }
@@ -307,7 +293,6 @@ $rol_actual = 'Supervisor';
         background: rgba(0, 119, 255, 0.8);
     }
 
-    /* Pulse notification dot */
     .pulse-dot {
         position: relative;
     }
@@ -331,7 +316,6 @@ $rol_actual = 'Supervisor';
         100% { transform: scale(0.8); opacity: 0.8; }
     }
 
-    /* Tabla tipo Zabbix mejorada */
     .zabbix-table {
         width: 100%;
         border-collapse: separate;
@@ -396,7 +380,6 @@ $rol_actual = 'Supervisor';
         background: linear-gradient(135deg, rgba(0, 119, 255, 0.08) 0%, rgba(0, 119, 255, 0.03) 100%);
     }
 
-    /* Badges de estado mejorados */
     .status-badge {
         display: inline-block;
         padding: 6px 12px;
@@ -440,7 +423,6 @@ $rol_actual = 'Supervisor';
         box-shadow: 0 2px 8px rgba(34, 197, 94, 0.15);
     }
 
-    /* Badges de tipo mejorados */
     .type-badge {
         display: inline-block;
         padding: 6px 12px;
@@ -491,7 +473,6 @@ $rol_actual = 'Supervisor';
         box-shadow: 0 2px 8px rgba(59, 130, 246, 0.15);
     }
 
-    /* Indicadores de carga */
     .loading-indicator {
         display: inline-block;
         width: 12px;
@@ -506,7 +487,6 @@ $rol_actual = 'Supervisor';
         to { transform: rotate(360deg); }
     }
 
-    /* Contador de registros */
     .record-counter {
         background: rgba(0, 119, 255, 0.1);
         color: #60a5fa;
@@ -517,7 +497,6 @@ $rol_actual = 'Supervisor';
         border: 1px solid rgba(0, 119, 255, 0.2);
     }
 
-    /* Animación de parpadeo simple para estado de eventos nuevos */
     .new-status-blink {
         animation: statusBlink 1s ease-in-out infinite;
     }
@@ -531,7 +510,6 @@ $rol_actual = 'Supervisor';
         }
     }
 
-    /* Separador de hora mejorado */
     .hour-separator {
         background: linear-gradient(135deg, rgba(0, 119, 255, 0.15) 0%, rgba(0, 119, 255, 0.08) 100%);
         border-top: 3px solid rgba(0, 119, 255, 0.4);
@@ -612,7 +590,6 @@ $rol_actual = 'Supervisor';
         }
     }
 
-    /* Estilos para input de fecha - hacer visible el icono del calendario */
     input[type="date"] {
         color-scheme: dark;
         position: relative;
@@ -635,7 +612,6 @@ $rol_actual = 'Supervisor';
         transition: all 0.2s ease;
     }
 
-    /* Para Firefox */
     input[type="date"]::-moz-calendar-picker-indicator {
         background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="16" height="15" viewBox="0 0 24 24"><path fill="%2360a5fa" d="M19 3h-1V1h-2v2H8V1H6v2H5c-1.11 0-1.99.9-1.99 2L3 19c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V8h14v11zM7 10h5v5H7z"/></svg>');
         background-color: transparent;
@@ -646,7 +622,6 @@ $rol_actual = 'Supervisor';
         opacity: 1;
     }
 
-    /* Estilos mejorados para filtros */
     .filter-group {
         position: relative;
     }
@@ -790,7 +765,6 @@ $rol_actual = 'Supervisor';
         color-scheme: dark;
     }
 
-    /* Hover effects para los grupos de filtros */
     .filter-group:hover .filter-label {
         color: #ffffff;
     }
@@ -799,7 +773,6 @@ $rol_actual = 'Supervisor';
         transform: scale(1.05);
     }
 
-    /* Animaciones suaves */
     .filter-input,
     .filter-select {
         transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
@@ -812,7 +785,6 @@ $rol_actual = 'Supervisor';
         box-shadow: 0 4px 12px rgba(0, 119, 255, 0.1);
     }
 
-    /* Colores para agrupación de eventos simultáneos */
     .group-color-1 { background-color: rgba(99, 102, 241, 0.1) !important; border-left: 4px solid #6366f1 !important; }
     .group-color-2 { background-color: rgba(16, 185, 129, 0.1) !important; border-left: 4px solid #10b981 !important; }
     .group-color-3 { background-color: rgba(245, 158, 11, 0.1) !important; border-left: 4px solid #f59e0b !important; }
@@ -824,7 +796,6 @@ $rol_actual = 'Supervisor';
     .group-color-9 { background-color: rgba(20, 184, 166, 0.1) !important; border-left: 4px solid #14b8a6 !important; }
     .group-color-10 { background-color: rgba(249, 115, 22, 0.1) !important; border-left: 4px solid #f97316 !important; }
 
-    /* Estilos para enlaces de DNI e INTF */
     .dni-link-icon {
         transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
         backdrop-filter: blur(4px);
@@ -842,7 +813,6 @@ $rol_actual = 'Supervisor';
         transform: scale(0.95);
     }
 
-    /* Estilo específico para enlaces de INTF (Thread Status) */
     .intf-link-icon {
         transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
         backdrop-filter: blur(4px);
@@ -862,21 +832,16 @@ $rol_actual = 'Supervisor';
   </style>
 </head>
 <body class="min-h-screen bg-[#0a0e17] bg-gradient-to-br from-gray-950 via-slate-900 to-gray-950 text-white font-sans flex overflow-x-hidden" x-data="{showUserMenu: false}">
-  <!-- Fondo de partículas -->
   <div class="particle-background"></div>
   
-  <!-- Orbe decorativo -->
   <div class="fixed -top-[35%] -right-[15%] w-[70%] h-[70%] rounded-full bg-gradient-to-br from-primary-600/20 to-secondary-600/10 blur-3xl"></div>
   <div class="fixed -bottom-[35%] -left-[15%] w-[70%] h-[70%] rounded-full bg-gradient-to-br from-secondary-600/10 to-primary-600/20 blur-3xl"></div>
   
 
   <?php $currentPage = basename($_SERVER['PHP_SELF']); ?>
-  <!-- Contenido principal -->
   <div class="w-full min-h-screen">
-      <!-- Barra superior -->
       <header class="h-16 bg-gradient-to-r from-cyber-dark/40 to-cyber-dark/30 backdrop-blur-md border-b border-white/10 sticky top-0 z-50">
           <div class="max-w-7xl mx-auto h-full flex items-center justify-between px-6">
-              <!-- Logo y título a la izquierda -->
               <div class="flex items-center gap-3">
                   <div class="w-10 h-10 bg-gradient-to-br from-orange-500 to-red-500 rounded-lg flex items-center justify-center">
                       <span class="mdi mdi-react text-xl text-white"></span>
@@ -887,7 +852,6 @@ $rol_actual = 'Supervisor';
                   </div>
               </div>
               
-              <!-- Navegación a la derecha -->
               <nav class="flex items-center gap-2">
                   <a href="index.php" class="px-4 py-2 rounded-lg transition-all duration-200 text-sm border-b-2 <?= $currentPage==='index.php' ? 'border-cyan-400 text-white' : 'border-transparent text-gray-300 hover:text-white hover:bg-cyber-blue/10' ?> flex items-center gap-2">
                       <span class="mdi mdi-home"></span>
@@ -913,10 +877,8 @@ $rol_actual = 'Supervisor';
           </div>
       </header>
 
-        <!-- Contenido principal -->
         <main class="px-6 py-6 pb-20">
             <div class="max-w-7xl mx-auto">
-            <!-- Header de la página -->
             <div class="mb-8" data-aos="fade-up" data-aos-delay="100">
                 <div class="flex items-center justify-between mb-6">
                     <div class="flex items-center gap-4">
@@ -938,7 +900,6 @@ $rol_actual = 'Supervisor';
                 </div>
             </div>
 
-            <!-- Controles de la tabla -->
             <div class="glass-card p-6 mb-6" data-aos="fade-up" data-aos-delay="200">
                 <div class="flex items-center justify-between">
                     <div class="flex items-center gap-4">
@@ -950,7 +911,6 @@ $rol_actual = 'Supervisor';
                 </div>
             </div>
 
-            <!-- Tabla de eventos -->
             <div class="glass-card p-6" data-aos="fade-up" data-aos-delay="300">
                 <div class="overflow-x-auto custom-scrollbar">
                     <table class="zabbix-table w-full" id="events-table">
@@ -966,7 +926,6 @@ $rol_actual = 'Supervisor';
                             </tr>
                         </thead>
                         <tbody id="events-tbody">
-                            <!-- Los datos se cargarán aquí dinámicamente -->
                         </tbody>
                     </table>
                 </div>
@@ -975,7 +934,6 @@ $rol_actual = 'Supervisor';
   </main>
   </div>
 
-  <!-- Modal para mostrar datos del cliente -->
   <div id="cliente-modal" class="fixed inset-0 bg-black bg-opacity-50 hidden z-50 flex items-center justify-center p-4">
     <div class="glass-card max-w-2xl w-full max-h-[90vh] overflow-y-auto">
       <div class="p-6">
@@ -995,14 +953,12 @@ $rol_actual = 'Supervisor';
         </div>
         
         <div id="cliente-content" class="space-y-4">
-          <!-- Los datos del cliente se cargarán aquí -->
         </div>
       </div>
     </div>
   </div>
 
   <script>
-  // Inicializar AOS (Animate on Scroll)
   document.addEventListener('DOMContentLoaded', function() {
     if (typeof AOS !== 'undefined') {
       AOS.init({
@@ -1012,19 +968,15 @@ $rol_actual = 'Supervisor';
       });
     }
 
-    // Inicializar carga de datos
     cargarDatosEventos();
     
-    // Auto-actualización desde configuración
     setInterval(cargarDatosEventos, <?= $config['update']['interval_seconds'] * 1000 ?>);
   });
 
-  // Variables globales para datos
   let allEventsData = [];
   let lastUpdateTime = null;
   let newEventIds = new Set();
 
-  // Función para cargar datos de eventos
   async function cargarDatosEventos() {
     try {
         const response = await fetch('api/get_events_data.php', {
@@ -1049,7 +1001,6 @@ $rol_actual = 'Supervisor';
                                  String(currentTime.getHours()).padStart(2, '0') + ':' + 
                                  String(currentTime.getMinutes()).padStart(2, '0');
             
-            // Detectar eventos nuevos del minuto actual
             if (lastUpdateTime !== null) {
                 data.events.forEach(event => {
                     const eventTime = new Date(event.TIME);
@@ -1071,12 +1022,10 @@ $rol_actual = 'Supervisor';
             document.getElementById('total-records').textContent = allEventsData.length;
         }
     } catch (error) {
-        // Error silencioso
     }
   }
 
 
-  // Función para actualizar la tabla
   function actualizarTabla(events) {
     const tbody = document.getElementById('events-tbody');
     
@@ -1092,7 +1041,6 @@ $rol_actual = 'Supervisor';
         return;
     }
 
-    // Generar HTML de la tabla básica
     let html = '';
     
     events.forEach(event => {
@@ -1102,7 +1050,6 @@ $rol_actual = 'Supervisor';
         const host = event.HOST || '-';
         const ponLog = event['PON/LOG'] || event.GPON || '-';
         
-        // Crear PON/LOG para la consulta a PostgreSQL (formato: HOST/PON/LOG)
         const ponLogForQuery = host + '/' + ponLog;
         
         html += `
@@ -1128,7 +1075,6 @@ $rol_actual = 'Supervisor';
   }
 
 
-  // Función para obtener la clase CSS del tipo
   function getTypeClass(tipo) {
     switch (tipo) {
         case 'EQUIPO ALARMADO':
@@ -1143,7 +1089,6 @@ $rol_actual = 'Supervisor';
   }
 
 
-  // Función para limpiar eventos antiguos del set de eventos nuevos
   function limpiarEventosAntiguos() {
     const currentTime = new Date();
     const currentMinute = currentTime.getFullYear() + '-' + 
@@ -1152,7 +1097,6 @@ $rol_actual = 'Supervisor';
                          String(currentTime.getHours()).padStart(2, '0') + ':' + 
                          String(currentTime.getMinutes()).padStart(2, '0');
     
-    // Limpiar eventos que ya no son del minuto actual
     for (let eventId of newEventIds) {
       const timePart = eventId.split('_').pop();
       const eventTime = new Date(timePart);
@@ -1168,10 +1112,8 @@ $rol_actual = 'Supervisor';
     }
   }
 
-  // Limpiar eventos antiguos cada minuto
   setInterval(limpiarEventosAntiguos, 60000);
 
-  // Actualizar reloj del menú de usuario en tiempo real
   function actualizarHoraUsuario() {
     const horaActualElement = document.getElementById('hora-actual');
     if (horaActualElement) {
@@ -1181,7 +1123,6 @@ $rol_actual = 'Supervisor';
     }
   }
 
-  // Actualizar hora de Perú en tiempo real
   function actualizarHoraPeru() {
     const horaPeruElement = document.getElementById('hora-peru');
     if (horaPeruElement) {
@@ -1199,12 +1140,10 @@ $rol_actual = 'Supervisor';
   actualizarHoraUsuario();
   actualizarHoraPeru();
 
-  // Función para mostrar datos del cliente
   async function mostrarDatosCliente(ponLog) {
     const modal = document.getElementById('cliente-modal');
     const content = document.getElementById('cliente-content');
     
-    // Mostrar modal con loading
     content.innerHTML = `
       <div class="flex items-center justify-center py-8">
         <div class="loading-indicator"></div>
@@ -1334,12 +1273,10 @@ $rol_actual = 'Supervisor';
     }
   }
 
-  // Event listeners para el modal
   document.getElementById('close-modal').addEventListener('click', function() {
     document.getElementById('cliente-modal').classList.add('hidden');
   });
 
-  // Cerrar modal al hacer clic fuera de él
   document.getElementById('cliente-modal').addEventListener('click', function(e) {
     if (e.target === this) {
       this.classList.add('hidden');
@@ -1347,21 +1284,17 @@ $rol_actual = 'Supervisor';
   });
   </script>
 
-  <!-- Sistema de Notificaciones - Script simplificado y estático -->
   <script>
   document.addEventListener('DOMContentLoaded', function() {
       const notificationBtn = document.getElementById('notification-btn');
       const notificationBadge = document.getElementById('notification-badge');
       
-      // Hacer el botón de notificaciones estático (sin funcionalidad)
       if (notificationBtn) {
           notificationBtn.addEventListener('click', function(e) {
               e.preventDefault();
               e.stopPropagation();
-              // Función estática - sin funcionalidad
           });
           
-          // Mantener el badge visible pero sin funcionalidad
           if (notificationBadge) {
               notificationBadge.style.display = 'block';
           }
@@ -1371,7 +1304,6 @@ $rol_actual = 'Supervisor';
   </script>
 
 <?php 
-// Función simple de keepalive (puede ser expandida según necesidades)
 function generar_js_keepalive() {
     return '<script>
         // Keepalive simple - mantener sesión activa

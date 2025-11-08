@@ -32,6 +32,42 @@
         </div>
     </div>
 
+    <div id="map-toolbar" style="position:fixed;top:12px;right:12px;z-index:1000;display:flex;flex-direction:row;gap:12px;align-items:flex-start;">
+        <div id="filter-panel" style="background:rgba(0,0,0,0.7);color:#fff;padding:12px 16px;border-radius:10px;font-family:system-ui,-apple-system,Segoe UI,Roboto,Inter,Arial,sans-serif;width:240px;">
+            <div style="display:flex;align-items:center;gap:6px;margin-bottom:12px;font-weight:600;font-size:14px;">
+                <span class="mdi mdi-filter-variant" style="font-size:16px;color:#60a5fa"></span>
+                <span>Filtros</span>
+            </div>
+            <div style="display:flex;flex-direction:column;gap:12px;font-size:12px;">
+                <label style="display:flex;flex-direction:column;gap:4px;">
+                    <span>OLT</span>
+                    <select id="filter-host" style="background:rgba(20,20,20,0.9);color:#fff;border:1px solid rgba(255,255,255,0.2);border-radius:6px;padding:5px 8px;font-size:12px;">
+                        <option value="">Todas las OLT</option>
+                    </select>
+                </label>
+                <label style="display:flex;flex-direction:column;gap:4px;">
+                    <span>Estado</span>
+                    <select id="filter-state" style="background:rgba(20,20,20,0.9);color:#fff;border:1px solid rgba(255,255,255,0.2);border-radius:6px;padding:5px 8px;font-size:12px;">
+                        <option value="">Todos los estados</option>
+                    </select>
+                </label>
+                <label style="display:flex;flex-direction:column;gap:4px;">
+                    <span>Fecha</span>
+                    <input type="text" id="filter-date" placeholder="dd/mm/aaaa" title="Selecciona una fecha" style="background:rgba(20,20,20,0.9);color:#fff;border:1px solid rgba(255,255,255,0.2);border-radius:6px;padding:5px 8px;font-size:12px;cursor:pointer;" readonly>
+                </label>
+                <button id="clear-filters" type="button" style="margin-top:6px;background:linear-gradient(135deg,#ef4444,#b91c1c);color:#fff;border:none;border-radius:6px;padding:6px 8px;font-size:12px;font-weight:600;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;">
+                    <span class="mdi mdi-broom"></span>
+                    Limpiar filtros
+                </button>
+            </div>
+        </div>
+
+        <div id="marker-counter" style="background:rgba(0, 0, 0, 0);color:#fff;padding:10px 14px;border-radius:10px;font-family:system-ui,-apple-system,Segoe UI,Roboto,Inter,Arial,sans-serif;min-width:220px;">
+
+            </div>
+        </div>
+    </div>
+
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script>
         const map = L.map('map').setView([-12.0464, -77.0428], 12);
@@ -83,35 +119,120 @@
             '#DA16FF', '#222A2A', '#B68100', '#750D86', '#EB663B', '#511CFB',
             '#00A08B', '#FB00D1'
         ];
-        // Colores fijos por OLT (ajustables). Si no está en esta lista, se usa la paleta general
         const predefinedHostColors = {
-            'SD-1': '#000000ff',      // Rosa fuerte
-            'SD-2': '#1E88E5',      // Azul vivo
-            'SD-3': '#FFC107',      // Amarillo dorado
-            'SD-7': '#43A047',      // Verde medio
-            'SD-9': '#8E24AA',      // Púrpura intenso
-            'INC-5': '#FB8C00',     // Naranja vibrante
-            'JIC-8': '#E53935',     // Rojo brillante
-            'JIC2-8': '#00897B',    // Verde turquesa
-            'ATE-9': '#5E35B1',     // Violeta oscuro
-            'SMP-10': '#F4511E',    // Naranja rojizo
-            'CAMP-11': '#3949AB',   // Azul profundo
-            'CAMP2-11': '#6D4C41',  // Marrón
-            'PTP-12': '#00ACC1',    // Celeste turquesa
-            'ANC-13': '#7CB342',    // Verde lima (único en la lista)
-            'CHO-14': '#FF6F61',    // Amarillo brillante
-            'LO-15': '#C2185B',     // Magenta
-            'LO2-15': '#607D8B',    // Gris azulado
-            'NEW_LO-15': '#303F9F', // Azul índigo puro
-            'VIR-16': '#0097A7',    // Azul petróleo
-            'PTP-17': '#AFB42B',    // Amarillo oliva (distinto del resto)
-            'VENT-18': '#8D6E63'    // Marrón suave
+            'SD-1': '#000000ff',
+            'SD-2': '#1E88E5',
+            'SD-3': '#FFC107',
+            'SD-7': '#43A047',
+            'SD-9': '#8E24AA',
+            'INC-5': '#FB8C00',
+            'JIC-8': '#E53935',
+            'JIC2-8': '#00897B',
+            'ATE-9': '#5E35B1',
+            'SMP-10': '#F4511E',
+            'CAMP-11': '#3949AB',
+            'CAMP2-11': '#6D4C41',
+            'PTP-12': '#00ACC1',
+            'ANC-13': '#7CB342',
+            'CHO-14': '#FF6F61',
+            'LO-15': '#C2185B',
+            'LO2-15': '#607D8B',
+            'NEW_LO-15': '#303F9F',
+            'VIR-16': '#0097A7',
+            'PTP-17': '#AFB42B',
+            'VENT-18': '#8D6E63'
         };
 
         const hostColorMap = {}; // HOST -> color
         let hostColorIndex = 0;
         const BLINK_DURATION_MS = 2 * 60 * 1000; // 2 minutos
         let firstLoadCompleted = false;
+        let latestRecords = [];
+        let lastHostOptionsSignature = '';
+
+        const hostFilterSelect = document.getElementById('filter-host');
+        const stateFilterSelect = document.getElementById('filter-state');
+        const dateFilterInput = document.getElementById('filter-date');
+        const clearFiltersButton = document.getElementById('clear-filters');
+
+        const filterState = {
+            host: '',
+            state: '',
+            date: ''
+        };
+
+        if (stateFilterSelect) {
+            stateFilterSelect.innerHTML = '<option value=\"\">Todos los estados</option>' + buildStateOptions(filterState.state);
+        }
+
+        if (hostFilterSelect) {
+            hostFilterSelect.addEventListener('change', () => {
+                filterState.host = hostFilterSelect.value;
+                renderFilteredMarkers();
+            });
+        }
+
+        if (stateFilterSelect) {
+            stateFilterSelect.addEventListener('change', () => {
+                filterState.state = stateFilterSelect.value;
+                renderFilteredMarkers();
+            });
+        }
+
+        if (dateFilterInput) {
+            const flatpickrCss = document.createElement('link');
+            flatpickrCss.rel = 'stylesheet';
+            flatpickrCss.href = 'https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css';
+            document.head.appendChild(flatpickrCss);
+
+            const flatpickrLoader = document.createElement('script');
+            flatpickrLoader.src = 'https://cdn.jsdelivr.net/npm/flatpickr';
+            flatpickrLoader.onload = () => {
+                const localeScript = document.createElement('script');
+                localeScript.src = 'https://cdn.jsdelivr.net/npm/flatpickr/dist/l10n/es.js';
+                localeScript.onload = () => {
+                    if (window.flatpickr) {
+                        flatpickr.localize(flatpickr.l10ns.es);
+                        flatpickr(dateFilterInput, {
+                            dateFormat: 'Y-m-d',
+                            altInput: true,
+                            altFormat: 'd/m/Y',
+                            allowInput: false,
+                            onChange: (selectedDates) => {
+                                const value = selectedDates[0] ? formatDateForFilter(selectedDates[0]) : '';
+                                filterState.date = value;
+                                renderFilteredMarkers();
+                            },
+                            onClose: () => {
+                                dateFilterInput.blur();
+                            }
+                        });
+                    }
+                };
+                document.head.appendChild(localeScript);
+            };
+            document.head.appendChild(flatpickrLoader);
+        }
+
+        if (clearFiltersButton) {
+            clearFiltersButton.addEventListener('click', () => {
+                filterState.host = '';
+                filterState.state = '';
+                filterState.date = '';
+
+                if (hostFilterSelect) hostFilterSelect.value = '';
+                if (stateFilterSelect) stateFilterSelect.value = '';
+                if (dateFilterInput) {
+                    if (dateFilterInput._flatpickr) {
+                        dateFilterInput._flatpickr.clear();
+                    } else {
+                        dateFilterInput.value = '';
+                    }
+                }
+
+                renderFilteredMarkers();
+            });
+        }
 
         function getColorForHost(host) {
             if (!hostColorMap[host]) {
@@ -333,6 +454,166 @@
                 .join('');
         }
 
+        function formatDateForFilter(dateObj) {
+            const year = dateObj.getFullYear();
+            const month = String(dateObj.getMonth() + 1).padStart(2, '0');
+            const day = String(dateObj.getDate()).padStart(2, '0');
+            return `${year}-${month}-${day}`;
+        }
+
+        function updateFilterOptions(records) {
+            if (!hostFilterSelect) {
+                return;
+            }
+
+            const uniqueHosts = Array.from(new Set(records.map(record => record.host))).sort((a, b) =>
+                a.localeCompare(b, 'es', { sensitivity: 'base' })
+            );
+            const signature = uniqueHosts.join('|');
+
+            if (signature !== lastHostOptionsSignature) {
+                const previousValue = hostFilterSelect.value;
+                hostFilterSelect.innerHTML = '<option value="">Todas las OLT</option>' +
+                    uniqueHosts.map(host => `<option value="${host}">${host}</option>`).join('');
+
+                if (previousValue && uniqueHosts.includes(previousValue)) {
+                    hostFilterSelect.value = previousValue;
+                } else {
+                    hostFilterSelect.value = '';
+                }
+                lastHostOptionsSignature = signature;
+            }
+
+            filterState.host = hostFilterSelect.value;
+        }
+
+        function applyFilters(records) {
+            return records.filter(record => {
+                if (filterState.host && record.host !== filterState.host) {
+                    return false;
+                }
+                if (filterState.state && record.stateFp !== filterState.state) {
+                    return false;
+                }
+                if (filterState.date && record.eventDate !== filterState.date) {
+                    return false;
+                }
+                return true;
+            });
+        }
+
+        function buildPopupHtml(record) {
+            const popupParts = [];
+            if (record.cliente) {
+                popupParts.push(`<strong>${record.cliente}</strong>`);
+            }
+            popupParts.push(`${record.host}/${record.normalizedPon}`);
+
+            const tipoEstado = [record.tipo, record.status].filter(Boolean).join(' - ');
+            if (tipoEstado) {
+                popupParts.push(tipoEstado);
+            }
+
+            if (record.formattedTime) {
+                popupParts.push(record.formattedTime);
+            }
+
+            const baseInfoHtml = popupParts.map(part => `<div>${part}</div>`).join('');
+
+            const dniSection = record.dni ? `
+                <div class="flex items-center justify-center gap-2">
+                    <span>DNI: ${record.dni}</span>
+                    <button type="button" class="dni-copy-btn inline-flex items-center justify-center w-6 h-6 rounded-full bg-slate-800 text-gray-200 hover:bg-slate-600 transition"
+                        title="Copiar DNI" data-dni="${record.dni}" data-key="${record.key}">
+                        <span class="mdi mdi-content-copy text-xs"></span>
+                    </button>
+                </div>
+            ` : '';
+
+            return `
+                <div class="space-y-2 text-sm text-gray-200 text-center">
+                    ${baseInfoHtml}
+                    ${dniSection}
+                    <div><strong>Estado:</strong> <span class="state-label" data-state-key="${record.key}">${stateToLabel(record.stateFp)}</span></div>
+                    <div class="flex flex-col gap-1 items-center">
+                        <label class="text-xs text-gray-400">Actualizar estado</label>
+                        <select class="state-select bg-slate-900/80 border border-slate-700 rounded px-2 py-1 text-sm text-white" data-key="${record.key}">
+                            ${buildStateOptions(record.stateFp)}
+                        </select>
+                    </div>
+                </div>
+            `;
+        }
+
+        function renderFilteredMarkers() {
+            const filteredRecords = applyFilters(latestRecords);
+            const desiredKeys = new Set();
+            const allRecordKeys = new Set(latestRecords.map(record => record.key));
+
+            filteredRecords.forEach(record => {
+                const popupHtml = buildPopupHtml(record);
+                addOrUpdateMarker(
+                    record.key,
+                    record.lat,
+                    record.lon,
+                    popupHtml,
+                    record.host,
+                    record.eventTimeMs,
+                    record.stateFp,
+                    record.fullPonLog,
+                    record.dni
+                );
+                desiredKeys.add(record.key);
+            });
+
+            const currentKeys = Object.keys(markersByKey);
+            currentKeys.forEach(key => {
+                if (!allRecordKeys.has(key)) {
+                    missingCounts[key] = (missingCounts[key] || 0) + 1;
+                    if (missingCounts[key] >= MISSING_THRESHOLD) {
+                        delete missingCounts[key];
+                        removeMarker(key);
+                    }
+                } else {
+                    missingCounts[key] = 0;
+                    if (!desiredKeys.has(key)) {
+                        removeMarker(key);
+                        delete missingCounts[key];
+                    }
+                }
+            });
+
+            const totalEl = document.getElementById('markedCountValue');
+            if (totalEl) {
+                totalEl.textContent = String(filteredRecords.length);
+            }
+
+            const hostBreakdownEl = document.getElementById('hostBreakdown');
+            if (hostBreakdownEl) {
+                if (filteredRecords.length === 0) {
+                    hostBreakdownEl.innerHTML = '<span style="opacity:.7">Sin datos</span>';
+                } else {
+                    const hostCounts = {};
+                    filteredRecords.forEach(record => {
+                        hostCounts[record.host] = (hostCounts[record.host] || 0) + 1;
+                    });
+                    const html = Object.entries(hostCounts)
+                        .sort((a, b) => b[1] - a[1])
+                        .map(([host, count]) => {
+                            const color = getColorForHost(host);
+                            return `<div style="display:flex;align-items:center;gap:8px;margin:4px 0;">
+                                <span class="mdi mdi-circle" style="font-size:12px;color:${color}"></span>
+                                <span style="flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;opacity:.9">${host}</span>
+                                <strong style="font-size:12px">${count}</strong>
+                            </div>`;
+                        }).join('');
+                    hostBreakdownEl.innerHTML = html;
+                }
+            }
+
+            refreshBlinkStates();
+        }
+
         function isIndividualPon(pon) {
             if (!pon) return false;
             const parts = pon.split('/');
@@ -419,6 +700,11 @@
                     await updateMarkerStateOnServer(key, newState);
                     markerData.stateFp = newState;
                     label.textContent = stateToLabel(newState);
+                    const datasetRecord = latestRecords.find(record => record.key === key);
+                    if (datasetRecord) {
+                        datasetRecord.stateFp = newState;
+                    }
+                    renderFilteredMarkers();
                 } catch (error) {
                     console.error('[MAP] Error actualizando estado:', error);
                     alert(error.message || 'No se pudo actualizar el estado');
@@ -481,7 +767,7 @@
                     ? logResp.records
                     : (Array.isArray(logResp.events) ? logResp.events : []);
 
-                const desiredKeys = new Set();
+                const processedRecords = [];
 
                 for (const record of rawRecords) {
                     if (!record || typeof record !== 'object') {
@@ -490,21 +776,24 @@
 
                     const hostRaw = record.host || record.olt || '';
                     const ponLogRaw = record.pon_log || record.intf || record.interface || '';
-                    const status = record.status || record.estado || '';
-                    const tipo = record.tipo || record.category || '';
+                    const statusValue = record.status || record.estado || record.STATUS || '';
+                    const tipoValue = record.tipo || record.category || record.TIPO || '';
                     const ubicacion = record.ubicacion || record.location || record.maps_url || '';
-                    const dni = record.dni || record.documento || record.doc || '';
-                    const cliente = record.cliente || record.nombre || record.name || '';
+                    const dniValue = record.dni || record.documento || record.doc || '';
+                    const clienteRaw = record.cliente || record.nombre || record.name || '';
                     const timestamp = record.timestamp || record.fecha || record.time || '';
 
                     let eventTimeMs = null;
+                    let eventDate = '';
                     const parsedTimestamp = parseLogTimestamp(timestamp);
                     if (parsedTimestamp instanceof Date && !Number.isNaN(parsedTimestamp.getTime())) {
                         eventTimeMs = parsedTimestamp.getTime();
+                        eventDate = formatDateForFilter(parsedTimestamp);
                     } else {
                         const fallbackMs = Date.parse(timestamp);
                         if (!Number.isNaN(fallbackMs)) {
                             eventTimeMs = fallbackMs;
+                            eventDate = formatDateForFilter(new Date(fallbackMs));
                         }
                     }
 
@@ -530,7 +819,6 @@
 
                     normalizedPon = normalizedPon.replace(/^\/+/, '');
                     const key = `${host}::${normalizedPon}`;
-
                     const fullPonLog = record.pon_log ? String(record.pon_log).trim() : `${host}/${normalizedPon}`;
 
                     const rawState = typeof record.state_fp === 'string' ? record.state_fp.trim() : '';
@@ -556,102 +844,30 @@
                         continue;
                     }
 
-                    const popupParts = [];
-                    if (cliente) {
-                        popupParts.push(`<strong>${cliente}</strong>`);
-                    }
-                    popupParts.push(`${host}/${normalizedPon}`);
+                    const processedRecord = {
+                        key,
+                        host,
+                        normalizedPon,
+                        fullPonLog,
+                        lat: coords.lat,
+                        lon: coords.lon,
+                        stateFp,
+                        dni: typeof dniValue === 'string' ? dniValue.trim() : String(dniValue || ''),
+                        cliente: typeof clienteRaw === 'string' ? clienteRaw.trim() : '',
+                        tipo: typeof tipoValue === 'string' ? tipoValue.trim() : '',
+                        status: typeof statusValue === 'string' ? statusValue.trim() : '',
+                        formattedTime: timestamp ? formatEventTime(timestamp) : '',
+                        timestampRaw: timestamp,
+                        eventTimeMs,
+                        eventDate
+                    };
 
-                    const tipoEstado = [tipo, status].filter(Boolean).join(' - ');
-                    if (tipoEstado) {
-                        popupParts.push(tipoEstado);
-                    }
-
-                    if (timestamp) {
-                        popupParts.push(formatEventTime(timestamp));
-                    }
-
-                    let dniSection = '';
-                    if (dni) {
-                        dniSection = `
-                            <div class="flex items-center justify-center gap-2">
-                                <span>DNI: ${dni}</span>
-                                <button type="button" class="dni-copy-btn inline-flex items-center justify-center w-6 h-6 rounded-full bg-slate-800 text-gray-200 hover:bg-slate-600 transition"
-                                    title="Copiar DNI" data-dni="${dni}" data-key="${key}">
-                                    <span class="mdi mdi-content-copy text-xs"></span>
-                                </button>
-                            </div>
-                        `;
-                    }
-
-                    const baseInfoHtml = popupParts.map(part => `<div>${part}</div>`).join('');
-                    const popupHtml = `
-                        <div class="space-y-2 text-sm text-gray-200 text-center">
-                            ${baseInfoHtml}
-                            ${dniSection}
-                            <div><strong>Estado:</strong> <span class="state-label" data-state-key="${key}">${stateToLabel(stateFp)}</span></div>
-                            <div class="flex flex-col gap-1 items-center">
-                                <label class="text-xs text-gray-400">Actualizar estado</label>
-                                <select class="state-select bg-slate-900/80 border border-slate-700 rounded px-2 py-1 text-sm text-white" data-key="${key}">
-                                    ${buildStateOptions(stateFp)}
-                                </select>
-                            </div>
-                        </div>
-                    `;
-
-                    desiredKeys.add(key);
-
-                    addOrUpdateMarker(key, coords.lat, coords.lon, popupHtml, host, eventTimeMs, stateFp, fullPonLog, dni);
-
-                    const markerItem = markersByKey[key];
-                    if (markerItem) {
-                        markerItem.lastSeen = Date.now();
-                        markerItem.host = host;
-                        markerItem.eventTimeMs = eventTimeMs;
-                        markerItem.stateFp = stateFp;
-                        markerItem.fullPonLog = fullPonLog;
-                        markerItem.dni = dni;
-                    }
+                    processedRecords.push(processedRecord);
                 }
 
-                Object.keys(markersByKey).forEach((key) => {
-                    if (!desiredKeys.has(key)) {
-                        missingCounts[key] = (missingCounts[key] || 0) + 1;
-                        if (missingCounts[key] >= MISSING_THRESHOLD) {
-                            delete missingCounts[key];
-                            removeMarker(key);
-                        }
-                    } else {
-                        missingCounts[key] = 0;
-                    }
-                });
-
-                const currentMarkers = Object.values(markersByKey);
-                const counterEl = document.getElementById('markedCountValue');
-                if (counterEl) {
-                    counterEl.textContent = String(currentMarkers.length);
-                }
-
-                const hostCounts = {};
-                currentMarkers.forEach(obj => {
-                    hostCounts[obj.host] = (hostCounts[obj.host] || 0) + 1;
-                });
-
-                const hostListEl = document.getElementById('hostBreakdown');
-                if (hostListEl) {
-                    const entries = Object.entries(hostCounts).sort((a, b) => b[1] - a[1]);
-                    const html = entries.map(([host, count]) => {
-                        const color = getColorForHost(host);
-                        return `<div style="display:flex;align-items:center;gap:8px;margin:4px 0;">
-                            <span class="mdi mdi-circle" style="font-size:12px;color:${color}"></span>
-                            <span style="flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;opacity:.9">${host}</span>
-                            <strong style="font-size:12px">${count}</strong>
-                        </div>`;
-                    }).join('');
-                    hostListEl.innerHTML = html || '<span style="opacity:.7">Sin datos</span>';
-                }
-
-                refreshBlinkStates();
+                latestRecords = processedRecords;
+                updateFilterOptions(latestRecords);
+                renderFilteredMarkers();
             } catch (error) {
                 console.error('[MAP] Error loadAndRender:', error);
             }

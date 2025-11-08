@@ -1,14 +1,10 @@
 <?php
-// Cargar configuración principal
 $config = require_once 'include/config.php';
 
-// Leer versión del sistema desde archivo VERSION
 $version = trim(file_get_contents('VERSION'));
 
-// Configurar zona horaria
 date_default_timezone_set($config['app']['timezone']);
 
-// Variables para el menú de usuario (simuladas por ahora)
 $usuario_actual = 'Administrador';
 $rol_actual = 'Supervisor';
 ?>
@@ -82,7 +78,6 @@ $rol_actual = 'Supervisor';
   </script>
 
   <style>
-    /* Configuración general */
     body {
         min-height: 100vh;
         background-color: #0B1120;
@@ -92,7 +87,6 @@ $rol_actual = 'Supervisor';
         position: relative;
     }
     
-    /* Efectos de cristal */
     .glass {
         background: rgba(13, 19, 33, 0.65);
         backdrop-filter: blur(12px) saturate(180%);
@@ -146,7 +140,6 @@ $rol_actual = 'Supervisor';
         left: 100%;
     }
     
-    /* Efectos de iconos */
     .icon-glow {
         filter: drop-shadow(0 0 5px var(--glow-color));
         transition: all 0.3s ease;
@@ -180,7 +173,6 @@ $rol_actual = 'Supervisor';
     .icon-glow-lime { --glow-color: #a3e635; }
     
     
-    /* Línea cyber */
     .cyber-line {
         height: 1px;
         background: linear-gradient(
@@ -194,7 +186,6 @@ $rol_actual = 'Supervisor';
         overflow: hidden;
     }
     
-    /* Animaciones */
     .fade-in-up {
         animation: fadeInUp 0.8s cubic-bezier(0.25, 0.46, 0.45, 0.94) both;
         animation-fill-mode: both;
@@ -219,13 +210,11 @@ $rol_actual = 'Supervisor';
         }
     }
     
-    /* Animaciones del logo Digital Matrix */
     @keyframes blink {
         0%, 70% { opacity: 1; }
         71%, 100% { opacity: 0.3; }
     }
     
-    /* Estilo de texto animado para FiberOps */
     .gradient-text-full {
         background: linear-gradient(90deg, #00ff88, #00d4ff, #7c3aed);
         background-size: 200% 100%;
@@ -240,7 +229,6 @@ $rol_actual = 'Supervisor';
         100% { background-position: -200% 0; }
     }
     
-    /* Grid de partículas de fondo */
     .particle-background {
       position: fixed;
       width: 100%;
@@ -261,7 +249,6 @@ $rol_actual = 'Supervisor';
       100% { background-position: 1000px 1000px, 1020px 1020px; }
     }
     
-    /* Efecto resplandor en los bordes */
     .glow-border {
       position: relative;
     }
@@ -287,7 +274,6 @@ $rol_actual = 'Supervisor';
     
     
     
-    /* Scrollbar personalizado */
     .custom-scrollbar::-webkit-scrollbar {
         width: 6px;
     }
@@ -307,7 +293,6 @@ $rol_actual = 'Supervisor';
         background: rgba(0, 119, 255, 0.8);
     }
 
-    /* Pulse notification dot */
     .pulse-dot {
         position: relative;
     }
@@ -331,7 +316,6 @@ $rol_actual = 'Supervisor';
         100% { transform: scale(0.8); opacity: 0.8; }
     }
 
-    /* Tabla tipo Zabbix mejorada */
     .zabbix-table {
         width: 100%;
         border-collapse: separate;
@@ -396,7 +380,6 @@ $rol_actual = 'Supervisor';
         background: linear-gradient(135deg, rgba(0, 119, 255, 0.08) 0%, rgba(0, 119, 255, 0.03) 100%);
     }
 
-    /* Badges de estado mejorados */
     .status-badge {
         display: inline-block;
         padding: 6px 12px;
@@ -440,7 +423,6 @@ $rol_actual = 'Supervisor';
         box-shadow: 0 2px 8px rgba(34, 197, 94, 0.15);
     }
 
-    /* Badges de tipo mejorados */
     .type-badge {
         display: inline-block;
         padding: 6px 12px;
@@ -491,7 +473,6 @@ $rol_actual = 'Supervisor';
         box-shadow: 0 2px 8px rgba(59, 130, 246, 0.15);
     }
 
-    /* Indicadores de carga */
     .loading-indicator {
         display: inline-block;
         width: 12px;
@@ -506,7 +487,6 @@ $rol_actual = 'Supervisor';
         to { transform: rotate(360deg); }
     }
 
-    /* Contador de registros */
     .record-counter {
         background: rgba(0, 119, 255, 0.1);
         color: #60a5fa;
@@ -517,7 +497,6 @@ $rol_actual = 'Supervisor';
         border: 1px solid rgba(0, 119, 255, 0.2);
     }
 
-    /* Animación de parpadeo simple para estado de eventos nuevos */
     .new-status-blink {
         animation: statusBlink 1s ease-in-out infinite;
     }
@@ -531,7 +510,6 @@ $rol_actual = 'Supervisor';
         }
     }
 
-    /* Separador de hora mejorado */
     .hour-separator {
         background: linear-gradient(135deg, rgba(0, 119, 255, 0.15) 0%, rgba(0, 119, 255, 0.08) 100%);
         border-top: 3px solid rgba(0, 119, 255, 0.4);
@@ -612,7 +590,6 @@ $rol_actual = 'Supervisor';
         }
     }
 
-    /* Estilos para input de fecha - hacer visible el icono del calendario */
     input[type="date"] {
         color-scheme: dark;
         position: relative;
@@ -635,7 +612,6 @@ $rol_actual = 'Supervisor';
         transition: all 0.2s ease;
     }
 
-    /* Para Firefox */
     input[type="date"]::-moz-calendar-picker-indicator {
         background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="16" height="15" viewBox="0 0 24 24"><path fill="%2360a5fa" d="M19 3h-1V1h-2v2H8V1H6v2H5c-1.11 0-1.99.9-1.99 2L3 19c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V8h14v11zM7 10h5v5H7z"/></svg>');
         background-color: transparent;
@@ -646,7 +622,6 @@ $rol_actual = 'Supervisor';
         opacity: 1;
     }
 
-    /* Estilos mejorados para filtros */
     .filter-group {
         position: relative;
     }
@@ -790,7 +765,6 @@ $rol_actual = 'Supervisor';
         color-scheme: dark;
     }
 
-    /* Hover effects para los grupos de filtros */
     .filter-group:hover .filter-label {
         color: #ffffff;
     }
@@ -799,7 +773,6 @@ $rol_actual = 'Supervisor';
         transform: scale(1.05);
     }
 
-    /* Animaciones suaves */
     .filter-input,
     .filter-select {
         transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
@@ -812,7 +785,6 @@ $rol_actual = 'Supervisor';
         box-shadow: 0 4px 12px rgba(0, 119, 255, 0.1);
     }
 
-    /* Colores para agrupación de eventos simultáneos */
     .group-color-1 { background-color: rgba(99, 102, 241, 0.1) !important; border-left: 4px solid #6366f1 !important; }
     .group-color-2 { background-color: rgba(16, 185, 129, 0.1) !important; border-left: 4px solid #10b981 !important; }
     .group-color-3 { background-color: rgba(245, 158, 11, 0.1) !important; border-left: 4px solid #f59e0b !important; }
@@ -827,20 +799,15 @@ $rol_actual = 'Supervisor';
   </style>
 </head>
 <body class="min-h-screen bg-[#0a0e17] bg-gradient-to-br from-gray-950 via-slate-900 to-gray-950 text-white font-sans flex overflow-x-hidden" x-data="{showUserMenu: false}">
-  <!-- Fondo de partículas -->
   <div class="particle-background"></div>
   
-  <!-- Orbe decorativo -->
   <div class="fixed -top-[35%] -right-[15%] w-[70%] h-[70%] rounded-full bg-gradient-to-br from-primary-600/20 to-secondary-600/10 blur-3xl"></div>
   <div class="fixed -bottom-[35%] -left-[15%] w-[70%] h-[70%] rounded-full bg-gradient-to-br from-secondary-600/10 to-primary-600/20 blur-3xl"></div>
   
 
-  <!-- Contenido principal -->
   <div class="w-full min-h-screen">
-      <!-- Barra superior -->
       <header class="h-16 bg-gradient-to-r from-cyber-dark/40 to-cyber-dark/30 backdrop-blur-md border-b border-white/10 sticky top-0 z-50">
           <div class="max-w-7xl mx-auto h-full flex items-center justify-between px-6">
-              <!-- Logo y título a la izquierda -->
               <div class="flex items-center gap-3">
                   <div class="w-10 h-10 bg-gradient-to-br from-orange-500 to-red-500 rounded-lg flex items-center justify-center">
                       <span class="mdi mdi-react text-xl text-white"></span>
@@ -851,7 +818,6 @@ $rol_actual = 'Supervisor';
                   </div>
               </div>
               
-              <!-- Navegación a la derecha -->
 <?php $currentPage = basename($_SERVER['PHP_SELF']); ?>
                 <nav class="flex items-center gap-2">
                     <a href="index.php" class="px-4 py-2 rounded-lg transition-all duration-200 text-sm border-b-2 <?= $currentPage==='index.php' ? 'border-cyan-400 text-white' : 'border-transparent text-gray-300 hover:text-white hover:bg-cyber-blue/10' ?> flex items-center gap-2">
