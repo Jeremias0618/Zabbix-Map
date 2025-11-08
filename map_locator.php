@@ -64,6 +64,12 @@
         L.control.layers({ 'Claro': lightLayer, 'Intermedio': midLayer, 'Oscuro': darkLayer, 'Satélite': satelliteLayer }, {}, { position: 'topleft' }).addTo(map);
 
         const markersByKey = {}; // key -> { marker, host }
+        const STATE_LABELS = {
+            planned: 'Visita Programada',
+            unplanned: 'No Programado',
+            without_message: 'Sin respuesta',
+            no_visitors: 'No desea visita'
+        };
         const missingCounts = {}; // key -> consecutive cycles missing
         const MISSING_THRESHOLD = 3; // evitar parpadeo: quitar tras 3 ciclos sin aparecer
 
@@ -136,25 +142,34 @@
             return createIconBySize(size, colorHex, !!isBlinking);
         }
 
-        function addOrUpdateMarker(key, lat, lon, popupHtml, host, eventTimeMs = null) {
+        function addOrUpdateMarker(key, lat, lon, popupHtml, host, eventTimeMs = null, stateFp = 'unplanned', fullPonLog = '') {
             const color = getColorForHost(host);
             const shouldBlink = eventTimeMs !== null && (Date.now() - eventTimeMs) <= BLINK_DURATION_MS;
 
             if (markersByKey[key]) {
-                if (popupHtml) markersByKey[key].marker.bindPopup(popupHtml);
+                if (popupHtml) {
+                    markersByKey[key].marker.setPopupContent(popupHtml);
+                }
                 markersByKey[key].eventTimeMs = eventTimeMs;
                 markersByKey[key].isBlinking = shouldBlink;
                 markersByKey[key].host = host;
+                markersByKey[key].stateFp = stateFp;
+                markersByKey[key].fullPonLog = fullPonLog;
                 markersByKey[key].marker.setIcon(getIconForZoom(map.getZoom(), color, shouldBlink));
                 return;
             }
             const marker = L.marker([lat, lon], { icon: getIconForZoom(map.getZoom(), color, shouldBlink) }).addTo(map);
             if (popupHtml) marker.bindPopup(popupHtml);
+            marker.on('popupopen', (event) => {
+                setupStateControls(event.popup.getElement(), key);
+            });
             markersByKey[key] = {
                 marker,
                 host,
                 eventTimeMs,
-                isBlinking: shouldBlink
+                isBlinking: shouldBlink,
+                stateFp,
+                fullPonLog
             };
         }
 
@@ -293,6 +308,16 @@
             return new Date(year, month, day, hour, minute);
         }
 
+        function stateToLabel(state) {
+            return STATE_LABELS[state] || STATE_LABELS.unplanned;
+        }
+
+        function buildStateOptions(selectedState) {
+            return Object.entries(STATE_LABELS)
+                .map(([value, label]) => `<option value="${value}"${value === selectedState ? ' selected' : ''}>${label}</option>`)
+                .join('');
+        }
+
         function isIndividualPon(pon) {
             if (!pon) return false;
             const parts = pon.split('/');
@@ -312,6 +337,83 @@
                 console.error('[MAP] Invalid JSON from', url, text?.slice(0, 300));
                 throw e;
             }
+        }
+
+        async function updateMarkerStateOnServer(key, newState) {
+            const markerData = markersByKey[key];
+            if (!markerData) {
+                throw new Error('Marcador no disponible');
+            }
+
+            const payload = {
+                host: markerData.host,
+                pon_log: markerData.fullPonLog,
+                state_fp: newState,
+            };
+
+            const response = await fetch('api/update_map_locator_state.php', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload),
+                cache: 'no-store',
+            });
+
+            const data = await response.json();
+            if (!response.ok || !data.success) {
+                throw new Error(data.message || 'No se pudo actualizar el estado');
+            }
+
+            return data;
+        }
+
+        function setupStateControls(popupEl, key) {
+            if (!popupEl) return;
+            const markerData = markersByKey[key];
+            if (!markerData) return;
+
+            const select = popupEl.querySelector('.state-select');
+            const label = popupEl.querySelector('.state-label');
+
+            if (!select || !label) return;
+
+            const currentState = markerData.stateFp || 'unplanned';
+            select.value = currentState;
+            label.textContent = stateToLabel(currentState);
+
+            if (select.dataset.listenerAttached === 'true') {
+                return;
+            }
+
+            select.dataset.listenerAttached = 'true';
+
+            select.addEventListener('change', async (event) => {
+                const newState = event.target.value;
+                if (!STATE_LABELS[newState]) {
+                    event.target.value = markerData.stateFp || 'unplanned';
+                    return;
+                }
+                if (newState === markerData.stateFp) {
+                    label.textContent = stateToLabel(newState);
+                    return;
+                }
+
+                const previousState = markerData.stateFp || 'unplanned';
+                event.target.disabled = true;
+
+                try {
+                    await updateMarkerStateOnServer(key, newState);
+                    markerData.stateFp = newState;
+                    label.textContent = stateToLabel(newState);
+                } catch (error) {
+                    console.error('[MAP] Error actualizando estado:', error);
+                    alert(error.message || 'No se pudo actualizar el estado');
+                    markerData.stateFp = previousState;
+                    event.target.value = previousState;
+                    label.textContent = stateToLabel(previousState);
+                } finally {
+                    event.target.disabled = false;
+                }
+            });
         }
 
         async function loadAndRender() {
@@ -375,7 +477,13 @@
                         continue;
                     }
 
+                    normalizedPon = normalizedPon.replace(/^\/+/, '');
                     const key = `${host}::${normalizedPon}`;
+
+                    const fullPonLog = record.pon_log ? String(record.pon_log).trim() : `${host}/${normalizedPon}`;
+
+                    const rawState = typeof record.state_fp === 'string' ? record.state_fp.trim() : '';
+                    const stateFp = STATE_LABELS[rawState] ? rawState : 'unplanned';
 
                     let coords = null;
                     const latCandidate = record.lat ?? record.latitude ?? record.latitud;
@@ -416,17 +524,31 @@
                         popupParts.push(`DNI: ${dni}`);
                     }
 
-                    const popupHtml = popupParts.join('<br>');
+                    const baseInfoHtml = popupParts.map(part => `<div>${part}</div>`).join('');
+                    const popupHtml = `
+                        <div class="space-y-2 text-sm text-gray-200 text-center">
+                            ${baseInfoHtml}
+                            <div><strong>Estado:</strong> <span class="state-label" data-state-key="${key}">${stateToLabel(stateFp)}</span></div>
+                            <div class="flex flex-col gap-1 items-center">
+                                <label class="text-xs text-gray-400">Actualizar estado</label>
+                                <select class="state-select bg-slate-900/80 border border-slate-700 rounded px-2 py-1 text-sm text-white" data-key="${key}">
+                                    ${buildStateOptions(stateFp)}
+                                </select>
+                            </div>
+                        </div>
+                    `;
 
                     desiredKeys.add(key);
 
-                    addOrUpdateMarker(key, coords.lat, coords.lon, popupHtml, host, eventTimeMs);
+                    addOrUpdateMarker(key, coords.lat, coords.lon, popupHtml, host, eventTimeMs, stateFp, fullPonLog);
 
                     const markerItem = markersByKey[key];
                     if (markerItem) {
                         markerItem.lastSeen = Date.now();
                         markerItem.host = host;
                         markerItem.eventTimeMs = eventTimeMs;
+                        markerItem.stateFp = stateFp;
+                        markerItem.fullPonLog = fullPonLog;
                     }
                 }
 

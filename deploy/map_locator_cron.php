@@ -41,6 +41,8 @@ exit(0);
 
 function runCycle(array $config, \PDO $pdo, string $logFile): void
 {
+    $existingStates = loadExistingStates($logFile);
+
     try {
         $events = fetchAllEvents($config);
     } catch (Throwable $e) {
@@ -72,10 +74,11 @@ function runCycle(array $config, \PDO $pdo, string $logFile): void
             continue;
         }
 
-        $fullPonLog = str_contains($ponLog, '/') ? $ponLog : $host . '/' . $ponLog;
-        if (!str_starts_with($fullPonLog, $host)) {
-            $fullPonLog = $host . '/' . ltrim($normalizedPon, '/');
-        }
+        $normalizedPon = ltrim($normalizedPon, '/');
+        $fullPonLog = $host . '/' . $normalizedPon;
+
+        $stateKey = buildStateKey($host, $normalizedPon);
+        $stateFp = $existingStates[$stateKey] ?? 'unplanned';
 
         $clientInfo = fetchClientInfo($pdo, $fullPonLog);
 
@@ -89,6 +92,7 @@ function runCycle(array $config, \PDO $pdo, string $logFile): void
             'descripcion' => $event['DESCRIPCION'] ?? '',
             'cliente' => $clientInfo['cliente'] ?? ($event['CLIENTE'] ?? null),
             'ubicacion' => $clientInfo['ubicacion'] ?? ($event['UBICACION'] ?? ''),
+            'state_fp' => $stateFp,
         ];
 
         if (!empty($clientInfo['dni_ruc']) && ($record['dni'] === 'N/A' || $record['dni'] === '' )) {
@@ -495,5 +499,70 @@ function writeLogFile(string $path, array $records): void
 
     $json = json_encode($payload, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
     file_put_contents($path, $json . PHP_EOL, LOCK_EX);
+}
+
+function buildStateKey(string $host, string $normalizedPon): string
+{
+    return $host . '::' . ltrim($normalizedPon, '/');
+}
+
+function loadExistingStates(string $logFile): array
+{
+    if (!file_exists($logFile)) {
+        return [];
+    }
+
+    $content = @file_get_contents($logFile);
+    if ($content === false) {
+        return [];
+    }
+
+    $content = trim($content);
+    if ($content === '') {
+        return [];
+    }
+
+    $decoded = json_decode($content, true);
+    if (json_last_error() !== JSON_ERROR_NONE) {
+        $decoded = [];
+        $lines = preg_split('/\R+/', $content, -1, PREG_SPLIT_NO_EMPTY);
+        foreach ($lines as $line) {
+            $item = json_decode($line, true);
+            if (json_last_error() === JSON_ERROR_NONE && is_array($item)) {
+                $decoded[] = $item;
+            }
+        }
+    }
+
+    if (isset($decoded['records']) && is_array($decoded['records'])) {
+        $records = $decoded['records'];
+    } elseif (is_array($decoded)) {
+        $records = $decoded;
+    } else {
+        $records = [];
+    }
+
+    $states = [];
+    foreach ($records as $record) {
+        if (!is_array($record)) {
+            continue;
+        }
+
+        $host = trim((string)($record['host'] ?? ''));
+        $ponFull = trim((string)($record['pon_log'] ?? ''));
+        if ($host === '' || $ponFull === '') {
+            continue;
+        }
+
+        $normalized = $ponFull;
+        if (str_starts_with($normalized, $host . '/')) {
+            $normalized = substr($normalized, strlen($host) + 1);
+        }
+        $normalized = ltrim($normalized, '/');
+
+        $states[buildStateKey($host, $normalized)] = $record['state_fp'] ?? 'unplanned';
+    }
+
+    return $states;
 }
 

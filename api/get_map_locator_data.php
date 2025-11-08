@@ -10,6 +10,8 @@ $response = [
     'records' => [],
 ];
 
+$allowedStates = ['planned', 'unplanned', 'without_message', 'no_visitors'];
+
 if (!file_exists($logFile)) {
     echo json_encode($response, JSON_UNESCAPED_UNICODE);
     exit;
@@ -78,6 +80,11 @@ if (!is_array($decoded)) {
 $cleanRecords = [];
 foreach ($decoded as $record) {
     if (is_array($record)) {
+        $state = $record['state_fp'] ?? 'unplanned';
+        if (!in_array($state, $allowedStates, true)) {
+            $state = 'unplanned';
+        }
+        $record['state_fp'] = $state;
         $cleanRecords[] = $record;
     }
 }
