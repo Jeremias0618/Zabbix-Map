@@ -33,6 +33,12 @@ echo -e "\033[0m"
 
 msg "🚀 Iniciando instalación básica de Zabbix Map..."
 
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+PROJECT_ROOT="$(dirname "$SCRIPT_DIR")"
+PHP_BIN="$(command -v php || echo /usr/bin/php)"
+LOG_DIR="/var/log/zabbix-map"
+CRON_LINE="* * * * * $PHP_BIN $PROJECT_ROOT/deploy/map_locator_cron.php --loop >> $LOG_DIR/map_locator_cron.log 2>&1"
+
 # --- 0) Desactivar IPv6 ---
 msg "Desactivando IPv6..."
 echo -e "precedence ::ffff:0:0/96 100" | tee -a /etc/gai.conf >/dev/null
@@ -153,6 +159,20 @@ else
 fi
 
 ufw status verbose || true
+
+# --- 6) Cron para map_locator_cron.php ---
+msg "Creando directorio de logs para cron..."
+mkdir -p "$LOG_DIR"
+chown root:root "$LOG_DIR"
+chmod 755 "$LOG_DIR"
+
+msg "Configurando cron para map_locator_cron.php..."
+if crontab -l 2>/dev/null | grep -F "$CRON_LINE" >/dev/null; then
+    warning_msg "Entrada de cron ya configurada, se mantiene la existente."
+else
+    (crontab -l 2>/dev/null; echo "$CRON_LINE") | crontab -
+    msg "Cron registrado: $CRON_LINE"
+fi
 
 msg "✅ Instalación básica terminada. Componentes listos: IPv6 desactivado, Apache, PHP 8.1 (PDO), PostgreSQL."
 exit 0

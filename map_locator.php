@@ -267,19 +267,14 @@
             }
         }
 
-        function buildPonLogFull(host, ponLog) {
-            if (!host || !ponLog) return null;
-            return host + '/' + ponLog;
-        }
-
         function isIndividualPon(pon) {
             if (!pon) return false;
             const parts = pon.split('/');
             return parts.length >= 3; // típicamente SLOT/PORT/LOG
         }
 
-        async function fetchJson(url, opts) {
-            const res = await fetch(url, opts);
+        async function fetchJson(url, opts = {}) {
+            const res = await fetch(url, { cache: 'no-store', ...opts });
             const text = await res.text();
             if (!res.ok) {
                 console.error('[MAP] HTTP error', res.status, text?.slice(0, 300));
@@ -295,57 +290,106 @@
 
         async function loadAndRender() {
             try {
-                const eventsResp = await fetchJson('api/get_events_data.php');
-                if (!eventsResp.success) return;
+                const logResp = await fetchJson(`api/get_map_locator_data.php?ts=${Date.now()}`);
+                if (!logResp.success) {
+                    if (logResp.message) {
+                        console.warn('[MAP] Log warning:', logResp.message);
+                    }
+                    return;
+                }
 
-                const problemEvents = (eventsResp.events || []).filter(e => e.STATUS === 'PROBLEM');
-                console.log('[MAP] PROBLEM events:', problemEvents.length);
+                const rawRecords = Array.isArray(logResp.records)
+                    ? logResp.records
+                    : (Array.isArray(logResp.events) ? logResp.events : []);
 
                 const desiredKeys = new Set();
-                const processedKeys = new Set(); // Para evitar duplicados en el mismo ciclo
 
-                for (const ev of problemEvents) {
-                    const host = ev.HOST;
-                    const pon = ev['PON/LOG'] || ev.GPON || '';
-
-                    if (!host || !pon) continue;
-
-                    if (ev.TIPO === 'CAIDA DE HILO') {
+                for (const record of rawRecords) {
+                    if (!record || typeof record !== 'object') {
                         continue;
                     }
 
-                    if (isIndividualPon(pon)) {
-                        const full = buildPonLogFull(host, pon);
-                        if (!full) continue;
-                        const key = full; // HOST/SLOT/PORT/LOG
-                        if (processedKeys.has(key)) continue; // evitar procesar duplicados en este ciclo
-                        processedKeys.add(key);
-                        
-                        try {
-                            const data = await fetchJson('api/get_cliente_data.php', {
-                                method: 'POST',
-                                headers: { 'Content-Type': 'application/json' },
-                                body: JSON.stringify({ pon_log: full })
-                            });
-                            if (data.success && data.cliente && data.cliente.ubicacion) {
-                                const coords = extractLatLon(data.cliente.ubicacion);
-                                if (coords) {
-                                    const dniLine = ev.DNI ? `<br>DNI: ${ev.DNI}` : '';
-                                    const timeLine = ev.TIME ? `<br>${formatEventTime(ev.TIME)}` : '';
-                                    const popup = `<strong>${data.cliente.cliente || 'Cliente'}</strong><br>` +
-                                                  `${data.cliente.pon_log || ''}<br>` +
-                                                  `${ev.TIPO || ''} - ${ev.STATUS || ''}` +
-                                                  timeLine +
-                                                  dniLine;
-                                    addOrUpdateMarker(key, coords.lat, coords.lon, popup, host, firstLoadCompleted);
-                                    // Solo agregar a desiredKeys DESPUÉS de agregar el marcador exitosamente
-                                    desiredKeys.add(key);
-                                }
-                            }
-                        } catch (err) {
-                            console.error('[MAP] Error procesando evento', key, err);
-                            // No agregar a desiredKeys si falla
+                    const hostRaw = record.host || record.olt || '';
+                    const ponLogRaw = record.pon_log || record.intf || record.interface || '';
+                    const status = record.status || record.estado || '';
+                    const tipo = record.tipo || record.category || '';
+                    const ubicacion = record.ubicacion || record.location || record.maps_url || '';
+                    const dni = record.dni || record.documento || record.doc || '';
+                    const cliente = record.cliente || record.nombre || record.name || '';
+                    const timestamp = record.timestamp || record.fecha || record.time || '';
+
+                    let host = typeof hostRaw === 'string' ? hostRaw.trim() : '';
+                    let ponLog = typeof ponLogRaw === 'string' ? ponLogRaw.trim() : '';
+
+                    if (!host && ponLog.includes('/')) {
+                        host = ponLog.split('/')[0];
+                    }
+
+                    if (!host || !ponLog) {
+                        continue;
+                    }
+
+                    let normalizedPon = ponLog;
+                    if (normalizedPon.startsWith(host + '/')) {
+                        normalizedPon = normalizedPon.substring(host.length + 1);
+                    }
+
+                    if (!isIndividualPon(normalizedPon) && !isIndividualPon(ponLog)) {
+                        continue;
+                    }
+
+                    const key = `${host}::${normalizedPon}`;
+
+                    let coords = null;
+                    const latCandidate = record.lat ?? record.latitude ?? record.latitud;
+                    const lonCandidate = record.lon ?? record.lng ?? record.longitude ?? record.longitud;
+
+                    if (latCandidate !== undefined && lonCandidate !== undefined) {
+                        const lat = parseFloat(latCandidate);
+                        const lon = parseFloat(lonCandidate);
+                        if (!Number.isNaN(lat) && !Number.isNaN(lon)) {
+                            coords = { lat, lon };
                         }
+                    }
+
+                    if (!coords && typeof ubicacion === 'string' && ubicacion.trim() !== '') {
+                        coords = extractLatLon(ubicacion);
+                    }
+
+                    if (!coords) {
+                        continue;
+                    }
+
+                    const popupParts = [];
+                    if (cliente) {
+                        popupParts.push(`<strong>${cliente}</strong>`);
+                    }
+                    popupParts.push(`${host}/${normalizedPon}`);
+
+                    const tipoEstado = [tipo, status].filter(Boolean).join(' - ');
+                    if (tipoEstado) {
+                        popupParts.push(tipoEstado);
+                    }
+
+                    if (timestamp) {
+                        popupParts.push(formatEventTime(timestamp));
+                    }
+
+                    if (dni) {
+                        popupParts.push(`DNI: ${dni}`);
+                    }
+
+                    const popupHtml = popupParts.join('<br>');
+
+                    desiredKeys.add(key);
+
+                    const shouldBlink = !markersByKey[key];
+                    addOrUpdateMarker(key, coords.lat, coords.lon, popupHtml, host, shouldBlink && !firstLoadCompleted);
+
+                    const markerItem = markersByKey[key];
+                    if (markerItem) {
+                        markerItem.lastSeen = Date.now();
+                        markerItem.host = host;
                     }
                 }
 
@@ -361,18 +405,17 @@
                     }
                 });
 
-                // Recalcular métricas SOLO con lo que está marcado actualmente
                 const currentMarkers = Object.values(markersByKey);
                 const counterEl = document.getElementById('markedCountValue');
-                if (counterEl) counterEl.textContent = String(currentMarkers.length);
+                if (counterEl) {
+                    counterEl.textContent = String(currentMarkers.length);
+                }
 
-                // Conteo por HOST basado en markers presentes
                 const hostCounts = {};
                 currentMarkers.forEach(obj => {
                     hostCounts[obj.host] = (hostCounts[obj.host] || 0) + 1;
                 });
 
-                // Actualizar ranking por HOST (mayor a menor)
                 const hostListEl = document.getElementById('hostBreakdown');
                 if (hostListEl) {
                     const entries = Object.entries(hostCounts).sort((a, b) => b[1] - a[1]);
@@ -388,9 +431,10 @@
                 }
 
                 refreshBlinkStates();
-            } catch (e) {
-                console.error('[MAP] Error loadAndRender:', e);
+            } catch (error) {
+                console.error('[MAP] Error loadAndRender:', error);
             }
+
             if (!firstLoadCompleted) {
                 firstLoadCompleted = true;
             }
