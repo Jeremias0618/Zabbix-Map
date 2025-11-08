@@ -38,7 +38,7 @@
                 <span class="mdi mdi-filter-variant" style="font-size:16px;color:#60a5fa"></span>
                 <span>Filtros</span>
             </div>
-            <div style="display:flex;flex-direction:column;gap:12px;font-size:12px;">
+             <div style="display:flex;flex-direction:column;gap:12px;font-size:12px;">
                 <label style="display:flex;flex-direction:column;gap:4px;">
                     <span>OLT</span>
                     <select id="filter-host" style="background:rgba(20,20,20,0.9);color:#fff;border:1px solid rgba(255,255,255,0.2);border-radius:6px;padding:5px 8px;font-size:12px;">
@@ -51,6 +51,10 @@
                         <option value="">Todos los estados</option>
                     </select>
                 </label>
+                 <label style="display:flex;flex-direction:column;gap:4px;">
+                     <span>DNI</span>
+                     <input type="text" id="filter-dni" placeholder="Ingresar DNI" style="background:rgba(20,20,20,0.9);color:#fff;border:1px solid rgba(255,255,255,0.2);border-radius:6px;padding:5px 8px;font-size:12px;">
+                 </label>
                 <label style="display:flex;flex-direction:column;gap:4px;">
                     <span>Fecha</span>
                     <input type="text" id="filter-date" placeholder="dd/mm/aaaa" title="Selecciona una fecha" style="background:rgba(20,20,20,0.9);color:#fff;border:1px solid rgba(255,255,255,0.2);border-radius:6px;padding:5px 8px;font-size:12px;cursor:pointer;" readonly>
@@ -152,13 +156,15 @@
 
         const hostFilterSelect = document.getElementById('filter-host');
         const stateFilterSelect = document.getElementById('filter-state');
+        const dniFilterInput = document.getElementById('filter-dni');
         const dateFilterInput = document.getElementById('filter-date');
         const clearFiltersButton = document.getElementById('clear-filters');
 
         const filterState = {
             host: '',
             state: '',
-            date: ''
+            date: '',
+            dni: ''
         };
 
         if (stateFilterSelect) {
@@ -175,6 +181,13 @@
         if (stateFilterSelect) {
             stateFilterSelect.addEventListener('change', () => {
                 filterState.state = stateFilterSelect.value;
+                renderFilteredMarkers();
+            });
+        }
+
+        if (dniFilterInput) {
+            dniFilterInput.addEventListener('input', () => {
+                filterState.dni = dniFilterInput.value.trim().toUpperCase();
                 renderFilteredMarkers();
             });
         }
@@ -219,9 +232,11 @@
                 filterState.host = '';
                 filterState.state = '';
                 filterState.date = '';
+                filterState.dni = '';
 
                 if (hostFilterSelect) hostFilterSelect.value = '';
                 if (stateFilterSelect) stateFilterSelect.value = '';
+                if (dniFilterInput) dniFilterInput.value = '';
                 if (dateFilterInput) {
                     if (dateFilterInput._flatpickr) {
                         dateFilterInput._flatpickr.clear();
@@ -495,6 +510,11 @@
                 if (filterState.state && record.stateFp !== filterState.state) {
                     return false;
                 }
+                if (filterState.dni) {
+                    if (!record.dniNormalized || record.dniNormalized !== filterState.dni) {
+                        return false;
+                    }
+                }
                 if (filterState.date && record.eventDate !== filterState.date) {
                     return false;
                 }
@@ -520,11 +540,11 @@
 
             const baseInfoHtml = popupParts.map(part => `<div>${part}</div>`).join('');
 
-            const dniSection = record.dni ? `
+            const dniSection = record.dniDisplay ? `
                 <div class="flex items-center justify-center gap-2">
-                    <span>DNI: ${record.dni}</span>
+                    <span>DNI: ${record.dniDisplay}</span>
                     <button type="button" class="dni-copy-btn inline-flex items-center justify-center w-6 h-6 rounded-full bg-slate-800 text-gray-200 hover:bg-slate-600 transition"
-                        title="Copiar DNI" data-dni="${record.dni}" data-key="${record.key}">
+                        title="Copiar DNI" data-dni="${record.dniDisplay}" data-key="${record.key}">
                         <span class="mdi mdi-content-copy text-xs"></span>
                     </button>
                 </div>
@@ -561,7 +581,7 @@
                     record.eventTimeMs,
                     record.stateFp,
                     record.fullPonLog,
-                    record.dni
+                    record.dniDisplay
                 );
                 desiredKeys.add(record.key);
             });
@@ -844,6 +864,12 @@
                         continue;
                     }
 
+                    let dniDisplay = typeof dniValue === 'string' ? dniValue.trim() : String(dniValue ?? '').trim();
+                    if (dniDisplay.toUpperCase() === 'N/A') {
+                        dniDisplay = '';
+                    }
+                    const dniNormalized = dniDisplay ? dniDisplay.toUpperCase() : '';
+
                     const processedRecord = {
                         key,
                         host,
@@ -852,7 +878,8 @@
                         lat: coords.lat,
                         lon: coords.lon,
                         stateFp,
-                        dni: typeof dniValue === 'string' ? dniValue.trim() : String(dniValue || ''),
+                        dniDisplay,
+                        dniNormalized,
                         cliente: typeof clienteRaw === 'string' ? clienteRaw.trim() : '',
                         tipo: typeof tipoValue === 'string' ? tipoValue.trim() : '',
                         status: typeof statusValue === 'string' ? statusValue.trim() : '',
