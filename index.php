@@ -62,7 +62,7 @@ $currentPage = basename($_SERVER['PHP_SELF']);
             <div class="text-center mb-10">
                 <h1 class="text-4xl md:text-5xl font-extrabold tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-orange-300 via-amber-300 to-yellow-300 mb-3"><?= htmlspecialchars($config['app']['name']) ?></h1>
                 <p class="text-sm text-gray-400 mb-2">v<?= htmlspecialchars($version) ?></p>
-                <p class="text-gray-300 max-w-3xl mx-auto">Sistema de monitoreo en tiempo real que integra la API de Zabbix con PostgreSQL para visualizar eventos, clientes y ubicaciones en un mapa interactivo.</p>
+                <p class="text-gray-300 max-w-3xl mx-auto">Plataforma de correlación telemétrica con ingesta síncrona de métricas, fusión de telemetría contextual y despliegue geoespacial para control operativo de infraestructuras distribuidas.</p>
             </div>
 
             <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6 max-w-6xl mx-auto">
@@ -72,8 +72,8 @@ $currentPage = basename($_SERVER['PHP_SELF']);
                             <span class="mdi mdi-chart-line text-2xl text-blue-400"></span>
                 </div>
                         <div>
-                            <h3 class="text-lg font-semibold">Eventos Zabbix</h3>
-                            <p class="text-sm text-gray-400">Listado y análisis de eventos en tiempo real</p>
+                            <h3 class="text-lg font-semibold">Eventos Observables</h3>
+                            <p class="text-sm text-gray-400">Normalización y análisis de señales en tiempo real</p>
             </div>
                     </div>
                 </a>
@@ -85,7 +85,7 @@ $currentPage = basename($_SERVER['PHP_SELF']);
                 </div>
                         <div>
                             <h3 class="text-lg font-semibold">Datos Básicos</h3>
-                            <p class="text-sm text-gray-400">Cruce de eventos con clientes de PostgreSQL</p>
+                            <p class="text-sm text-gray-400">Orquestación de datasets y correlación contextual</p>
                 </div>
             </div>
                 </a>
@@ -97,7 +97,7 @@ $currentPage = basename($_SERVER['PHP_SELF']);
                 </div>
                         <div>
                             <h3 class="text-lg font-semibold">Configuración</h3>
-                            <p class="text-sm text-gray-400">Parámetros de Zabbix, PostgreSQL y app</p>
+                            <p class="text-sm text-gray-400">Ajustes de conectividad, persistencia y telemetría</p>
                 </div>
             </div>
                 </a>
@@ -108,8 +108,8 @@ $currentPage = basename($_SERVER['PHP_SELF']);
                             <span class="mdi mdi-map-marker-radius text-2xl text-red-400"></span>
                 </div>
                         <div>
-                            <h3 class="text-lg font-semibold">Mapa (Zabbix)</h3>
-                            <p class="text-sm text-gray-400">Marcadores de eventos y clientes en OSM</p>
+                            <h3 class="text-lg font-semibold">Topología Geoespacial</h3>
+                            <p class="text-sm text-gray-400">Proyección vectorial de eventos y entidades operativas</p>
                         </div>
                     </div>
                 </a>
