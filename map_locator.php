@@ -136,20 +136,25 @@
             return createIconBySize(size, colorHex, !!isBlinking);
         }
 
-        function addOrUpdateMarker(key, lat, lon, popupHtml, host, shouldBlink = false) {
+        function addOrUpdateMarker(key, lat, lon, popupHtml, host, eventTimeMs = null) {
             const color = getColorForHost(host);
+            const shouldBlink = eventTimeMs !== null && (Date.now() - eventTimeMs) <= BLINK_DURATION_MS;
+
             if (markersByKey[key]) {
                 if (popupHtml) markersByKey[key].marker.bindPopup(popupHtml);
+                markersByKey[key].eventTimeMs = eventTimeMs;
+                markersByKey[key].isBlinking = shouldBlink;
+                markersByKey[key].host = host;
+                markersByKey[key].marker.setIcon(getIconForZoom(map.getZoom(), color, shouldBlink));
                 return;
             }
-            const isBlinking = !!shouldBlink;
-            const marker = L.marker([lat, lon], { icon: getIconForZoom(map.getZoom(), color, isBlinking) }).addTo(map);
+            const marker = L.marker([lat, lon], { icon: getIconForZoom(map.getZoom(), color, shouldBlink) }).addTo(map);
             if (popupHtml) marker.bindPopup(popupHtml);
             markersByKey[key] = {
                 marker,
                 host,
-                blinkUntil: isBlinking ? Date.now() + BLINK_DURATION_MS : null,
-                isBlinking: isBlinking
+                eventTimeMs,
+                isBlinking: shouldBlink
             };
         }
 
@@ -163,13 +168,10 @@
 
         map.on('zoomend', () => {
             const z = map.getZoom();
-            const now = Date.now();
             Object.values(markersByKey).forEach(obj => {
                 const color = getColorForHost(obj.host);
-                const shouldBlink = obj.blinkUntil && now < obj.blinkUntil;
-                if (obj.isBlinking !== shouldBlink) {
-                    obj.isBlinking = shouldBlink;
-                }
+                const shouldBlink = obj.eventTimeMs !== null && (Date.now() - obj.eventTimeMs) <= BLINK_DURATION_MS;
+                obj.isBlinking = shouldBlink;
                 obj.marker.setIcon(getIconForZoom(z, color, obj.isBlinking));
             });
         });
@@ -177,12 +179,9 @@
         function refreshBlinkStates() {
             const now = Date.now();
             Object.values(markersByKey).forEach(obj => {
-                const shouldBlink = obj.blinkUntil && now < obj.blinkUntil;
+                const shouldBlink = obj.eventTimeMs !== null && (now - obj.eventTimeMs) <= BLINK_DURATION_MS;
                 if (obj.isBlinking !== shouldBlink) {
                     obj.isBlinking = shouldBlink;
-                    if (!shouldBlink) {
-                        obj.blinkUntil = null;
-                    }
                     const color = getColorForHost(obj.host);
                     obj.marker.setIcon(getIconForZoom(map.getZoom(), color, shouldBlink));
                 }
@@ -267,6 +266,33 @@
             }
         }
 
+        function parseLogTimestamp(timeStr) {
+            if (!timeStr) return null;
+            const trimmed = String(timeStr).trim();
+            const match = trimmed.match(/^(\d{4})[\/-](\d{2})[\/-](\d{2})\s+(\d{1,2}):(\d{2})(?:\s*([ap]m))?$/i);
+            if (!match) {
+                return null;
+            }
+
+            let [, yearStr, monthStr, dayStr, hourStr, minuteStr, ampmRaw] = match;
+            let year = parseInt(yearStr, 10);
+            let month = parseInt(monthStr, 10) - 1;
+            let day = parseInt(dayStr, 10);
+            let hour = parseInt(hourStr, 10);
+            const minute = parseInt(minuteStr, 10);
+
+            if ([year, month, day, hour, minute].some((v) => Number.isNaN(v))) {
+                return null;
+            }
+
+            if (ampmRaw) {
+                const ampm = ampmRaw.toLowerCase();
+                hour = hour % 12 + (ampm === 'pm' ? 12 : 0);
+            }
+
+            return new Date(year, month, day, hour, minute);
+        }
+
         function isIndividualPon(pon) {
             if (!pon) return false;
             const parts = pon.split('/');
@@ -317,6 +343,17 @@
                     const dni = record.dni || record.documento || record.doc || '';
                     const cliente = record.cliente || record.nombre || record.name || '';
                     const timestamp = record.timestamp || record.fecha || record.time || '';
+
+                    let eventTimeMs = null;
+                    const parsedTimestamp = parseLogTimestamp(timestamp);
+                    if (parsedTimestamp instanceof Date && !Number.isNaN(parsedTimestamp.getTime())) {
+                        eventTimeMs = parsedTimestamp.getTime();
+                    } else {
+                        const fallbackMs = Date.parse(timestamp);
+                        if (!Number.isNaN(fallbackMs)) {
+                            eventTimeMs = fallbackMs;
+                        }
+                    }
 
                     let host = typeof hostRaw === 'string' ? hostRaw.trim() : '';
                     let ponLog = typeof ponLogRaw === 'string' ? ponLogRaw.trim() : '';
@@ -383,13 +420,13 @@
 
                     desiredKeys.add(key);
 
-                    const shouldBlink = !markersByKey[key];
-                    addOrUpdateMarker(key, coords.lat, coords.lon, popupHtml, host, shouldBlink && !firstLoadCompleted);
+                    addOrUpdateMarker(key, coords.lat, coords.lon, popupHtml, host, eventTimeMs);
 
                     const markerItem = markersByKey[key];
                     if (markerItem) {
                         markerItem.lastSeen = Date.now();
                         markerItem.host = host;
+                        markerItem.eventTimeMs = eventTimeMs;
                     }
                 }
 
