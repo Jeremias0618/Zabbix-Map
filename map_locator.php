@@ -146,10 +146,10 @@
         function updateFilterToggleButton() {
             if (!filterToggleButton) return;
             if (filtersVisible) {
-                filterToggleButton.innerHTML = '<span class="mdi mdi-eye-off-outline"></span><span></span>';
+                filterToggleButton.innerHTML = '<span class="mdi mdi-eye-off-outline"></span>';
                 filterToggleButton.title = 'Ocultar filtros';
             } else {
-                filterToggleButton.innerHTML = '<span class="mdi mdi-eye-outline"></span><span></span>';
+                filterToggleButton.innerHTML = '<span class="mdi mdi-eye-outline"></span>';
                 filterToggleButton.title = 'Mostrar filtros';
             }
             filterToggleButton.setAttribute('aria-pressed', filtersVisible ? 'true' : 'false');
