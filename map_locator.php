@@ -113,6 +113,8 @@
         };
         let filtersVisible = true;
         let filterToggleButton = null;
+        const pendingStateUpdates = {};
+        const PENDING_STATE_TTL_MS = 15000;
 
         const lightLayer = L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
             maxZoom: 19,
@@ -772,7 +774,6 @@
 
                 const previousState = markerData.stateFp || 'unplanned';
                 event.target.disabled = true;
-
                 try {
                     await updateMarkerStateOnServer(key, newState);
                     markerData.stateFp = newState;
@@ -781,6 +782,11 @@
                     if (datasetRecord) {
                         datasetRecord.stateFp = newState;
                     }
+                    pendingStateUpdates[key] = {
+                        state: newState,
+                        confirmed: true,
+                        updatedAt: Date.now()
+                    };
                     renderFilteredMarkers();
                 } catch (error) {
                     console.error('[MAP] Error actualizando estado:', error);
@@ -899,7 +905,8 @@
                     const fullPonLog = record.pon_log ? String(record.pon_log).trim() : `${host}/${normalizedPon}`;
 
                     const rawState = typeof record.state_fp === 'string' ? record.state_fp.trim() : '';
-                    const stateFp = STATE_LABELS[rawState] ? rawState : 'unplanned';
+                    const serverStateFp = STATE_LABELS[rawState] ? rawState : 'unplanned';
+                    let stateFp = serverStateFp;
 
                     let coords = null;
                     const latCandidate = record.lat ?? record.latitude ?? record.latitud;
@@ -927,6 +934,15 @@
                     }
                     const dniNormalized = dniDisplay ? dniDisplay.toUpperCase() : '';
 
+                    const pendingState = pendingStateUpdates[key];
+                    if (pendingState) {
+                        stateFp = pendingState.state;
+                        pendingState.updatedAt = Date.now();
+                        if (pendingState.confirmed && serverStateFp === pendingState.state) {
+                            delete pendingStateUpdates[key];
+                        }
+                    }
+
                     const processedRecord = {
                         key,
                         host,
@@ -948,6 +964,15 @@
 
                     processedRecords.push(processedRecord);
                 }
+
+                const now = Date.now();
+                Object.keys(pendingStateUpdates).forEach((key) => {
+                    const pending = pendingStateUpdates[key];
+                    if (!pending) return;
+                    if (pending.confirmed && (!pending.updatedAt || now - pending.updatedAt >= PENDING_STATE_TTL_MS)) {
+                        delete pendingStateUpdates[key];
+                    }
+                });
 
                 latestRecords = processedRecords;
                 updateFilterOptions(latestRecords);
