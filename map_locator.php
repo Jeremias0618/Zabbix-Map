@@ -13,6 +13,28 @@
         .mdi-marker.leaflet-div-icon, .svg-marker.leaflet-div-icon { background: transparent; border: none; }
         .mdi-marker, .svg-marker { line-height: 0; }
         .svg-marker.svg-marker-blink { animation: markerBlink 1.2s ease-in-out infinite; }
+        #filter-panel.is-hidden { display: none; }
+        .filter-toggle-control button {
+            background: rgba(0,0,0,0.75);
+            color: #fff;
+            border: none;
+            border-radius: 8px;
+            padding: 6px 12px;
+            font-family: system-ui,-apple-system,Segoe UI,Roboto,Inter,Arial,sans-serif;
+            font-size: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            transition: background 0.2s ease;
+        }
+        .filter-toggle-control button:hover {
+            background: rgba(40,40,40,0.85);
+        }
+        .filter-toggle-control .mdi {
+            font-size: 16px;
+        }
         @keyframes markerBlink {
             0%, 100% { opacity: 1; filter: drop-shadow(0 0 0 rgba(255,255,255,0.4)); }
             50% { opacity: 0.35; filter: drop-shadow(0 0 10px rgba(255,255,255,0.85)); }
@@ -76,6 +98,22 @@
     <script>
         const map = L.map('map').setView([-12.0464, -77.0428], 12);
 
+        const filterPanel = document.getElementById('filter-panel');
+        const hostFilterSelect = document.getElementById('filter-host');
+        const stateFilterSelect = document.getElementById('filter-state');
+        const dniFilterInput = document.getElementById('filter-dni');
+        const dateFilterInput = document.getElementById('filter-date');
+        const clearFiltersButton = document.getElementById('clear-filters');
+
+        const filterState = {
+            host: '',
+            state: '',
+            date: '',
+            dni: ''
+        };
+        let filtersVisible = true;
+        let filterToggleButton = null;
+
         const lightLayer = L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
             maxZoom: 19,
             subdomains: 'abcd',
@@ -102,6 +140,38 @@
         midLayer.addTo(map);
 
         L.control.layers({ 'Claro': lightLayer, 'Intermedio': midLayer, 'Oscuro': darkLayer, 'Satélite': satelliteLayer }, {}, { position: 'topleft' }).addTo(map);
+
+        function updateFilterToggleButton() {
+            if (!filterToggleButton) return;
+            if (filtersVisible) {
+                filterToggleButton.innerHTML = '<span class="mdi mdi-eye-off-outline"></span><span></span>';
+                filterToggleButton.title = 'Ocultar filtros';
+            } else {
+                filterToggleButton.innerHTML = '<span class="mdi mdi-eye-outline"></span><span></span>';
+                filterToggleButton.title = 'Mostrar filtros';
+            }
+            filterToggleButton.setAttribute('aria-pressed', filtersVisible ? 'true' : 'false');
+        }
+
+        const filterToggleControl = L.control({ position: 'topleft' });
+        filterToggleControl.onAdd = function () {
+            const container = L.DomUtil.create('div', 'leaflet-control filter-toggle-control');
+            filterToggleButton = L.DomUtil.create('button', 'filter-toggle-button', container);
+            filterToggleButton.type = 'button';
+            updateFilterToggleButton();
+            L.DomEvent.disableClickPropagation(container);
+            L.DomEvent.disableScrollPropagation(container);
+            L.DomEvent.on(filterToggleButton, 'click', (event) => {
+                L.DomEvent.stop(event);
+                filtersVisible = !filtersVisible;
+                if (filterPanel) {
+                    filterPanel.classList.toggle('is-hidden', !filtersVisible);
+                }
+                updateFilterToggleButton();
+            });
+            return container;
+        };
+        filterToggleControl.addTo(map);
 
         const markersByKey = {}; // key -> { marker, host }
         const STATE_LABELS = {
@@ -153,19 +223,6 @@
         let firstLoadCompleted = false;
         let latestRecords = [];
         let lastHostOptionsSignature = '';
-
-        const hostFilterSelect = document.getElementById('filter-host');
-        const stateFilterSelect = document.getElementById('filter-state');
-        const dniFilterInput = document.getElementById('filter-dni');
-        const dateFilterInput = document.getElementById('filter-date');
-        const clearFiltersButton = document.getElementById('clear-filters');
-
-        const filterState = {
-            host: '',
-            state: '',
-            date: '',
-            dni: ''
-        };
 
         if (stateFilterSelect) {
             stateFilterSelect.innerHTML = '<option value=\"\">Todos los estados</option>' + buildStateOptions(filterState.state);
